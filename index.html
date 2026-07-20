@@ -1,0 +1,2120 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Shaxsiy Nazoratchi</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ════════════════════════════════════════════════════════════
+   SHAXSIY NAZORATCHI — Design System v3
+   Inspiration: Vercel, Raycast, Linear
+   Font: Inter (neutral, professional, legible)
+   ════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Surfaces ── */
+  --bg:      #0a0b0f;
+  --surf1:   #111318;
+  --surf2:   #18191f;
+  --surf3:   #1f2128;
+  --border:  rgba(255,255,255,0.06);
+  --border2: rgba(255,255,255,0.04);
+
+  /* ── Brand ── */
+  --accent:    #6366f1;
+  --accent-h:  #7c7ff5;
+  --accent-s:  #4f52e0;
+  --accent-rgb:99,102,241;
+
+  /* ── Semantic ── */
+  --green:     #10b981;
+  --green-rgb: 16,185,129;
+  --amber:     #f59e0b;
+  --amber-rgb: 245,158,11;
+  --red:       #ef4444;
+  --red-rgb:   239,68,68;
+  --purple:    #8b5cf6;
+  --teal:      #14b8a6;
+
+  /* ── Text ── */
+  --t1: #f1f2f6;
+  --t2: #8b8fa8;
+  --t3: #3d404f;
+
+  /* ── Layout ── */
+  --r:   12px;
+  --r-s: 8px;
+  --r-xs:6px;
+  --font:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+}
+
+[data-theme="light"] {
+  --bg:      #f5f5f7;
+  --surf1:   #ffffff;
+  --surf2:   #f0f0f5;
+  --surf3:   #e8e8ef;
+  --border:  rgba(0,0,0,0.07);
+  --border2: rgba(0,0,0,0.04);
+  --accent:    #4f52e0;
+  --accent-h:  #3b3ec9;
+  --accent-s:  #6366f1;
+  --accent-rgb:79,82,224;
+  --green:     #059669;
+  --green-rgb: 5,150,105;
+  --amber:     #d97706;
+  --amber-rgb: 217,119,6;
+  --red:       #dc2626;
+  --red-rgb:   220,38,38;
+  --t1: #0f1117;
+  --t2: #5c6077;
+  --t3: #a0a3b8;
+}
+
+/* ── RESET ── */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent}
+img,svg{display:block}
+button{font-family:var(--font);cursor:pointer;border:none;background:none}
+
+/* ── BASE ── */
+html{height:100%}
+body{
+  font-family:var(--font);font-size:15px;line-height:1.5;
+  background:var(--bg);color:var(--t1);
+  min-height:100%;overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+  transition:background .2s,color .2s;
+}
+
+/* ── HEADER ── */
+.hdr{
+  position:sticky;top:0;z-index:80;
+  padding:12px 16px;
+  background:var(--bg);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.hdr-left{display:flex;align-items:center;gap:10px}
+.hdr-avatar{
+  width:34px;height:34px;border-radius:50%;
+  background:rgba(var(--accent-rgb),.15);
+  border:1px solid rgba(var(--accent-rgb),.25);
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;flex-shrink:0;position:relative;
+}
+.hdr-name{font-size:15px;font-weight:700;letter-spacing:-.3px}
+.hdr-unvon{font-size:11px;color:var(--t2)}
+.hdr-ball{
+  display:flex;align-items:center;gap:5px;
+  background:var(--surf2);border:1px solid var(--border);
+  border-radius:20px;padding:4px 11px;
+  font-size:12px;font-weight:600;color:var(--t2);
+}
+
+/* ── PAGES ── */
+.page{display:none;padding:12px 14px 90px;animation:pageIn .18s ease}
+.page.on{display:block}
+@keyframes pageIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── NAV ── */
+.nav{
+  position:fixed;bottom:0;left:0;right:0;z-index:90;
+  display:flex;align-items:stretch;
+  background:var(--bg);border-top:1px solid var(--border);
+  padding-bottom:max(6px,env(safe-area-inset-bottom));
+}
+.nav-btn{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  gap:3px;padding:7px 4px 5px;
+  color:var(--t3);font-size:10px;font-weight:500;
+  transition:color .15s;
+}
+.nav-btn.on{color:var(--accent)}
+.nav-icon{font-size:20px;line-height:1}
+
+/* ── CARD ── */
+.card{
+  background:var(--surf1);border:1px solid var(--border);
+  border-radius:var(--r);padding:16px;margin-bottom:10px;
+}
+.card-lbl{
+  font-size:10px;font-weight:700;letter-spacing:1px;
+  text-transform:uppercase;color:var(--t3);margin-bottom:12px;
+}
+
+/* ── HOME ── */
+.home-top{
+  background:var(--surf1);border:1px solid var(--border);
+  border-radius:var(--r);padding:18px;margin-bottom:10px;
+  display:flex;align-items:center;gap:14px;
+}
+.big-avatar{
+  width:52px;height:52px;border-radius:50%;
+  background:rgba(var(--accent-rgb),.12);
+  border:1.5px solid rgba(var(--accent-rgb),.2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:24px;flex-shrink:0;position:relative;
+}
+.big-avatar .badge{
+  position:absolute;bottom:-2px;right:-2px;
+  font-size:12px;line-height:1;
+}
+.home-info{}
+.home-name{font-size:20px;font-weight:800;letter-spacing:-.5px;margin-bottom:2px}
+.home-meta{font-size:12px;color:var(--t2)}
+.ball-num{
+  font-size:32px;font-weight:900;letter-spacing:-1.5px;
+  line-height:1;margin-top:12px;
+}
+.ball-lbl{font-size:11px;color:var(--t2);margin-top:2px}
+.xp-bar{height:3px;background:var(--surf3);border-radius:2px;overflow:hidden;margin-top:10px}
+.xp-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .8s cubic-bezier(.4,0,.2,1)}
+
+/* ── STAT ROW ── */
+.stat-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px}
+.stat-box{
+  background:var(--surf1);border:1px solid var(--border);
+  border-radius:var(--r-s);padding:12px;text-align:center;
+}
+.stat-val{font-size:20px;font-weight:700;letter-spacing:-.5px;margin-bottom:2px}
+.stat-lbl{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.6px}
+
+/* ── PROGRESS BAR ── */
+.pbar{height:3px;background:var(--surf3);border-radius:2px;overflow:hidden}
+.pbar-f{height:100%;border-radius:2px;transition:width .7s cubic-bezier(.4,0,.2,1)}
+
+/* ── INTIZOM RING ── */
+.intizom-row{display:flex;gap:10px;margin-bottom:10px}
+.intizom-ring-card{
+  background:var(--surf1);border:1px solid var(--border);
+  border-radius:var(--r-s);padding:14px;
+  display:flex;align-items:center;gap:14px;flex:1;
+}
+.ring-wrap{width:64px;height:64px;position:relative;flex-shrink:0}
+.ring-wrap svg{transform:rotate(-90deg)}
+.ring-center{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+}
+.ring-num{font-size:16px;font-weight:800;letter-spacing:-.5px}
+.ring-sub{font-size:8px;color:var(--t3);text-transform:uppercase;letter-spacing:.4px}
+.ring-detail{}
+.ring-title{font-size:13px;font-weight:700;margin-bottom:5px}
+.ring-row{display:flex;justify-content:space-between;font-size:11px;color:var(--t3);margin-bottom:3px}
+.ring-row span:last-child{color:var(--t1);font-weight:500}
+
+/* ── MOTIVATSIYA ── */
+.motiv-card{
+  background:var(--surf2);
+  border-left:3px solid var(--amber);
+  border-radius:var(--r-s);
+  padding:12px 14px;margin-bottom:10px;
+  font-size:13px;color:var(--t2);line-height:1.6;
+}
+
+/* ── SECTION HEAD ── */
+.sec-head{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:8px;
+}
+.sec-title{font-size:14px;font-weight:700}
+.sec-badge{
+  font-size:10px;font-weight:600;color:var(--t2);
+  background:var(--surf2);border:1px solid var(--border);
+  border-radius:20px;padding:2px 9px;
+}
+
+/* ── TASKS ── */
+.task-item{
+  display:flex;align-items:center;gap:11px;
+  padding:11px 13px;
+  background:var(--surf1);border:1px solid var(--border);
+  border-radius:var(--r-s);margin-bottom:6px;cursor:pointer;
+  transition:border-color .15s,opacity .15s;
+  user-select:none;
+}
+.task-item:active{opacity:.8}
+.task-item.done{border-color:rgba(var(--green-rgb),.22)}
+.task-item.failed{border-color:rgba(var(--red-rgb),.22)}
+.task-check{
+  width:22px;height:22px;flex-shrink:0;
+  background:var(--surf3);border:1.5px solid var(--border);
+  border-radius:5px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;transition:all .18s;
+}
+.task-item.done  .task-check{background:rgba(var(--green-rgb),.15);border-color:var(--green);color:var(--green)}
+.task-item.failed .task-check{background:rgba(var(--red-rgb),.15);border-color:var(--red);color:var(--red)}
+.task-info{flex:1;min-width:0}
+.task-name{font-weight:500;font-size:14px;margin-bottom:3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.task-name.done-txt{text-decoration:line-through;color:var(--t3)}
+.task-meta{font-size:11px;color:var(--t3);display:flex;gap:8px;align-items:center}
+.prio-dot{width:5px;height:5px;border-radius:50%;display:inline-block}
+.task-time{font-size:12px;font-weight:600;color:var(--accent);margin-left:auto;flex-shrink:0}
+
+/* ── HABITS ── */
+.habit-item{
+  display:flex;align-items:center;gap:11px;
+  padding:11px 13px;
+  background:var(--surf1);border:1px solid var(--border);
+  border-radius:var(--r-s);margin-bottom:6px;
+}
+.habit-emoji{font-size:22px}
+.habit-inf{flex:1}
+.habit-name{font-size:14px;font-weight:500;margin-bottom:3px}
+.habit-streak{font-size:11px;color:var(--amber);font-weight:600}
+.habit-ck{
+  width:34px;height:34px;border-radius:50%;flex-shrink:0;
+  background:var(--surf3);border:1.5px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:15px;cursor:pointer;transition:all .18s;
+}
+.habit-ck.ok{background:rgba(var(--green-rgb),.14);border-color:var(--green)}
+
+/* ── NAMOZ ── */
+.namoz-item{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:11px 13px;
+  background:var(--surf1);border:1px solid var(--border);
+  border-radius:var(--r-s);margin-bottom:6px;
+}
+.namoz-left{display:flex;align-items:center;gap:10px}
+.namoz-icon{font-size:20px}
+.namoz-name{font-weight:600;font-size:14px;margin-bottom:1px}
+.namoz-time{font-size:13px;font-weight:700;color:var(--accent)}
+.namoz-ck{
+  width:32px;height:32px;border-radius:50%;
+  background:var(--surf3);border:1.5px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;cursor:pointer;transition:all .18s;
+}
+.namoz-ck.oqildi{background:rgba(var(--green-rgb),.14);border-color:var(--green)}
+.namoz-ck.qazo{background:rgba(var(--red-rgb),.14);border-color:var(--red)}
+.namoz-ck.endi{background:rgba(var(--amber-rgb),.14);border-color:var(--amber)}
+
+.namoz-stat-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.ns-lbl{width:68px;font-size:11px;color:var(--t2);flex-shrink:0}
+.ns-bar{flex:1;height:5px;background:var(--surf3);border-radius:3px;overflow:hidden}
+.ns-fill{height:100%;border-radius:3px}
+.ns-cnt{font-size:12px;font-weight:600;width:22px;text-align:right}
+
+/* ── ORZULAR XARITASI ── */
+.dream-grid{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:10px;margin-bottom:10px;
+}
+.dream-card{
+  background:var(--surf1);border:1px solid var(--border);
+  border-radius:var(--r);padding:16px;
+  cursor:pointer;transition:border-color .18s,transform .18s;
+  display:flex;flex-direction:column;gap:0;
+  position:relative;overflow:hidden;
+}
+.dream-card:active{transform:scale(.97)}
+.dream-card.achieved{border-color:rgba(var(--green-rgb),.3)}
+.dream-card::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(var(--accent-rgb),.04) 0%,transparent 60%);
+  pointer-events:none;
+}
+.dream-card.achieved::before{
+  background:linear-gradient(135deg,rgba(var(--green-rgb),.06) 0%,transparent 60%);
+}
+.dream-emoji{font-size:28px;margin-bottom:10px;line-height:1}
+.dream-cat{
+  font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+  color:var(--t3);margin-bottom:6px;
+}
+.dream-title{font-size:13px;font-weight:700;line-height:1.35;margin-bottom:8px}
+.dream-status{
+  font-size:10px;font-weight:600;margin-top:auto;
+  display:flex;align-items:center;gap:4px;
+}
+.dream-status.active{color:var(--accent)}
+.dream-status.achieved{color:var(--green)}
+
+.dream-fab{
+  position:fixed;bottom:78px;right:16px;z-index:70;
+  width:50px;height:50px;border-radius:50%;
+  background:var(--accent);
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;box-shadow:0 4px 16px rgba(var(--accent-rgb),.4);
+  cursor:pointer;transition:transform .15s,background .15s;
+  border:none;
+}
+.dream-fab:active{transform:scale(.92)}
+.dream-fab.hidden{display:none}
+
+.cat-chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px}
+.cat-chip{
+  flex-shrink:0;padding:5px 12px;
+  background:var(--surf2);border:1px solid var(--border);
+  border-radius:20px;font-size:11px;font-weight:500;color:var(--t2);
+  cursor:pointer;transition:all .15s;white-space:nowrap;
+}
+.cat-chip.on{
+  background:rgba(var(--accent-rgb),.12);
+  border-color:rgba(var(--accent-rgb),.3);
+  color:var(--accent);font-weight:600;
+}
+
+/* ── STATISTIKA ── */
+.period-row{display:flex;gap:6px;margin-bottom:12px}
+.period-btn{
+  flex:1;padding:8px;
+  background:var(--surf2);border:1px solid var(--border);
+  border-radius:var(--r-s);text-align:center;
+  font-size:12px;font-weight:500;color:var(--t2);
+  cursor:pointer;transition:all .15s;
+}
+.period-btn.on{
+  background:rgba(var(--accent-rgb),.1);
+  border-color:rgba(var(--accent-rgb),.3);
+  color:var(--accent);font-weight:600;
+}
+
+.chart-wrap{display:flex;align-items:flex-end;gap:4px;height:80px;margin-bottom:8px}
+.chart-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;height:100%}
+.chart-bars{flex:1;width:100%;display:flex;align-items:flex-end;gap:1px}
+.chart-bar{flex:1;border-radius:3px 3px 0 0;min-height:3px;transition:height .5s cubic-bezier(.4,0,.2,1)}
+.chart-bar.tot{background:var(--surf3)}
+.chart-bar.don{background:var(--accent)}
+.chart-lbl{font-size:8px;color:var(--t3);white-space:nowrap}
+
+.chart-legend{display:flex;gap:14px;margin-bottom:12px}
+.legend-i{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t2)}
+.legend-d{width:8px;height:8px;border-radius:2px}
+
+.trend-canvas-wrap{width:100%;overflow-x:auto;margin-bottom:12px}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;padding-bottom:3px}
+.tab{
+  flex-shrink:0;padding:6px 13px;border-radius:20px;
+  border:1px solid var(--border);background:var(--surf2);
+  color:var(--t3);font-size:12px;font-weight:500;cursor:pointer;
+  transition:all .15s;white-space:nowrap;
+}
+.tab.on{
+  background:rgba(var(--accent-rgb),.1);
+  border-color:rgba(var(--accent-rgb),.3);
+  color:var(--accent);font-weight:600;
+}
+
+/* ── ADD BUTTON ── */
+.add-btn{
+  width:100%;background:var(--accent);border:none;border-radius:var(--r-s);
+  color:#fff;font-size:14px;font-weight:600;padding:12px;
+  cursor:pointer;margin-bottom:10px;transition:background .15s,opacity .12s;
+  letter-spacing:-.1px;
+}
+.add-btn:active{background:var(--accent-h);opacity:.9}
+
+/* ── MODAL ── */
+.ov{
+  display:none;position:fixed;inset:0;z-index:200;
+  background:rgba(0,0,0,.5);align-items:flex-end;
+}
+.ov.open{display:flex}
+.ov.on{display:flex}
+.modal{
+  width:100%;max-height:88vh;
+  background:var(--surf1);
+  border-radius:18px 18px 0 0;
+  border-top:1px solid var(--border);
+  padding:20px 18px max(20px,env(safe-area-inset-bottom));
+  overflow-y:auto;
+  animation:slideUp .22s cubic-bezier(.32,.72,0,1);
+}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-handle{
+  width:32px;height:3px;border-radius:2px;
+  background:var(--surf3);margin:0 auto 18px;
+}
+.modal-title{font-size:18px;font-weight:800;letter-spacing:-.4px;margin-bottom:18px}
+.inp-g{margin-bottom:14px}
+.inp-lbl{
+  font-size:10px;font-weight:700;letter-spacing:.8px;
+  text-transform:uppercase;color:var(--t3);
+  margin-bottom:7px;display:block;
+}
+.inp{
+  width:100%;background:var(--surf2);border:1px solid var(--border);
+  border-radius:var(--r-s);color:var(--t1);font-family:var(--font);
+  font-size:14px;padding:11px 13px;outline:none;
+  transition:border-color .15s;-webkit-appearance:none;
+}
+.inp:focus{border-color:var(--accent)}
+.chips{display:flex;gap:7px;flex-wrap:wrap}
+.chip{
+  padding:5px 12px;background:var(--surf2);border:1px solid var(--border);
+  border-radius:20px;font-size:12px;font-weight:500;color:var(--t2);
+  cursor:pointer;transition:all .15s;white-space:nowrap;
+}
+.chip.on{
+  background:rgba(var(--accent-rgb),.1);
+  border-color:rgba(var(--accent-rgb),.35);
+  color:var(--accent);font-weight:600;
+}
+.modal-btn{
+  width:100%;padding:13px;background:var(--accent);border:none;
+  border-radius:var(--r-s);color:#fff;font-family:var(--font);
+  font-size:14px;font-weight:600;cursor:pointer;
+  margin-top:6px;transition:background .15s;letter-spacing:-.1px;
+}
+.modal-btn:active{background:var(--accent-h)}
+
+/* ── MODAL DREAM DETAIL ── */
+.dream-detail-header{text-align:center;padding:8px 0 16px}
+.dream-detail-emoji{font-size:48px;margin-bottom:10px}
+.dream-detail-cat{
+  font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+  color:var(--t3);margin-bottom:8px;
+}
+.dream-detail-title{font-size:20px;font-weight:800;letter-spacing:-.4px;margin-bottom:6px}
+.dream-detail-status{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:12px;font-weight:600;padding:4px 12px;border-radius:20px;
+  margin-bottom:16px;
+}
+.dream-detail-status.active{background:rgba(var(--accent-rgb),.1);color:var(--accent)}
+.dream-detail-status.achieved{background:rgba(var(--green-rgb),.1);color:var(--green)}
+.dream-detail-btn{
+  width:100%;padding:13px;border-radius:var(--r-s);border:none;
+  font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;
+  margin-bottom:8px;transition:opacity .15s;
+}
+.dream-detail-btn.achieve{background:var(--green);color:#fff}
+.dream-detail-btn.unachieve{background:var(--surf2);color:var(--t1)}
+.dream-detail-btn.del{background:rgba(var(--red-rgb),.12);color:var(--red)}
+.dream-detail-btn:active{opacity:.85}
+
+/* ── STORE ── */
+.store-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.store-item{
+  background:var(--surf1);border:1px solid var(--border);
+  border-radius:var(--r-s);padding:14px;text-align:center;
+  cursor:pointer;transition:border-color .15s;
+}
+.store-item:active{opacity:.85}
+.store-item.owned{border-color:rgba(var(--green-rgb),.28)}
+.store-item.locked{opacity:.4;cursor:default}
+.store-emoji{font-size:28px;margin-bottom:5px}
+.store-name{font-size:13px;font-weight:700;margin-bottom:3px}
+.store-desc{font-size:10px;color:var(--t3);margin-bottom:7px;line-height:1.4}
+.store-price{font-size:12px;font-weight:600;color:var(--amber)}
+.store-price.owned{color:var(--green)}
+
+/* ── CHALLENGE ── */
+.ch-card{
+  background:var(--surf1);border:1px solid var(--border);
+  border-radius:var(--r);padding:15px;margin-bottom:10px;
+}
+.ch-head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.ch-emoji{font-size:24px}
+.ch-title{font-size:14px;font-weight:700;margin-bottom:2px}
+.ch-desc{font-size:12px;color:var(--t2)}
+.ch-meta{font-size:11px;color:var(--t3);margin-bottom:10px;display:flex;gap:12px}
+.ch-join{
+  font-size:11px;font-weight:600;padding:5px 14px;
+  border-radius:20px;cursor:pointer;border:none;
+}
+.ch-join.join{background:rgba(var(--accent-rgb),.1);color:var(--accent);border:1px solid rgba(var(--accent-rgb),.25)}
+.ch-join.joined{background:rgba(var(--green-rgb),.1);color:var(--green);border:1px solid rgba(var(--green-rgb),.2)}
+
+/* ── GOALS ── */
+.goal-item{
+  background:var(--surf1);border:1px solid var(--border);
+  border-radius:var(--r-s);padding:14px;margin-bottom:8px;
+}
+.goal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:7px}
+.goal-title{font-size:14px;font-weight:700}
+.goal-badge{font-size:10px;font-weight:600;padding:3px 8px;border-radius:4px;flex-shrink:0}
+.goal-badge.active{background:rgba(var(--accent-rgb),.1);color:var(--accent)}
+.goal-badge.done{background:rgba(var(--green-rgb),.1);color:var(--green)}
+.goal-meta{font-size:11px;color:var(--t3);margin-bottom:6px;display:flex;gap:10px}
+.goal-reward-txt{font-size:12px;color:var(--amber);margin-bottom:8px}
+
+/* ── RATING ── */
+.rating-item{
+  display:flex;align-items:center;gap:11px;
+  padding:10px 13px;background:var(--surf1);
+  border:1px solid var(--border);border-radius:var(--r-s);margin-bottom:7px;
+}
+.rating-item.me{border-color:rgba(var(--accent-rgb),.3)}
+.rating-pos{font-size:16px;font-weight:800;width:26px;text-align:center;flex-shrink:0}
+.rating-name{flex:1;font-weight:500;font-size:14px}
+.rating-ball{font-size:14px;font-weight:700;color:var(--t2)}
+
+/* ── HEATMAP ── */
+.heatmap-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:3px;margin-bottom:8px}
+.hm-cell{aspect-ratio:1;border-radius:3px;background:var(--surf3)}
+.hm-cell.l1{background:rgba(var(--accent-rgb),.2)}
+.hm-cell.l2{background:rgba(var(--accent-rgb),.45)}
+.hm-cell.l3{background:rgba(var(--accent-rgb),.7)}
+.hm-cell.l4{background:var(--accent)}
+
+/* ── PROFIL / AVATAR ── */
+.profil-top{text-align:center;padding:20px 0 12px}
+.profil-avatar{
+  width:72px;height:72px;border-radius:50%;
+  background:rgba(var(--accent-rgb),.12);
+  border:1.5px solid rgba(var(--accent-rgb),.2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:32px;margin:0 auto 10px;
+}
+.profil-name{font-size:18px;font-weight:800;letter-spacing:-.4px;margin-bottom:3px}
+.profil-unvon{font-size:12px;color:var(--t2)}
+
+/* ── ZIKR ── */
+.zikr-card{
+  background:var(--surf1);border:1px solid var(--border);
+  border-radius:var(--r);padding:16px;margin-bottom:10px;
+}
+.zikr-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.zikr-emoji{font-size:26px}
+.zikr-name{font-weight:700;font-size:14px;margin-bottom:2px}
+.zikr-today{font-size:11px;color:var(--amber);font-weight:600}
+.zikr-count{font-size:44px;font-weight:900;letter-spacing:-2px;text-align:center;line-height:1;margin-bottom:3px}
+.zikr-target{font-size:11px;color:var(--t3);text-align:center;margin-bottom:8px}
+.zikr-btns{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.zikr-btn{
+  padding:10px 4px;background:var(--surf2);border:1px solid var(--border);
+  border-radius:var(--r-xs);color:var(--accent);
+  font-weight:700;font-size:13px;cursor:pointer;text-align:center;
+  transition:background .12s;
+}
+.zikr-btn:active{background:rgba(var(--accent-rgb),.15)}
+
+/* ── NAMOZ STREAK BADGE ── */
+.streak-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(var(--amber-rgb),.1);
+  border:1px solid rgba(var(--amber-rgb),.2);
+  border-radius:20px;padding:5px 12px;
+  font-size:12px;font-weight:600;color:var(--amber);
+}
+
+/* ── SETTINGS ── */
+.settings-row{
+  display:flex;align-items:center;justify-content:space-between;
+  font-size:14px;
+}
+.switch{position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0}
+.switch input{opacity:0;width:0;height:0}
+.sw-sl{
+  position:absolute;cursor:pointer;inset:0;
+  background:var(--surf3);border:1px solid var(--border);
+  border-radius:999px;transition:.2s;
+}
+.sw-sl::before{
+  content:'';position:absolute;height:16px;width:16px;
+  left:3px;bottom:3px;background:var(--t2);
+  border-radius:50%;transition:.2s;
+}
+.switch input:checked + .sw-sl{background:var(--accent);border-color:var(--accent)}
+.switch input:checked + .sw-sl::before{transform:translateX(20px);background:#fff}
+.settings-toggle{
+  width:100%;padding:12px;border-radius:var(--r-s);
+  border:1px solid var(--border);background:var(--surf2);
+  color:var(--t1);font-family:var(--font);font-size:13px;font-weight:600;
+  cursor:pointer;transition:.15s;text-align:left;
+}
+.settings-toggle:active{opacity:.85}
+.settings-toggle.on{
+  background:rgba(var(--accent-rgb),.1);
+  border-color:rgba(var(--accent-rgb),.3);color:var(--accent);
+}
+
+/* ── INTIZOM DETAIL ── */
+.intizom-detail-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:9px 0;border-bottom:1px solid var(--border2);font-size:13px;
+}
+.intizom-detail-row:last-child{border-bottom:none}
+.intizom-detail-val{font-size:14px;font-weight:700;color:var(--accent)}
+
+/* ── EMPTY STATE ── */
+.empty{text-align:center;padding:32px 20px;color:var(--t3)}
+.empty-icon{font-size:36px;margin-bottom:10px}
+.empty-txt{font-size:13px;line-height:1.6}
+
+/* ── TOAST ── */
+.toast{
+  position:fixed;bottom:82px;left:50%;transform:translateX(-50%);
+  background:var(--surf2);border:1px solid var(--border);
+  border-radius:8px;padding:9px 18px;
+  font-size:13px;font-weight:500;z-index:400;white-space:nowrap;
+  animation:toastIn .2s ease;pointer-events:none;
+  box-shadow:0 4px 16px rgba(0,0,0,.25);
+}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(6px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+/* ── OVERLAYS ── */
+.full-ov{
+  position:fixed;inset:0;z-index:1000;background:var(--bg);
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  text-align:center;padding:30px;gap:14px;
+}
+.full-ov.hidden{display:none}
+.spinner{
+  width:36px;height:36px;border:2.5px solid var(--border);
+  border-top-color:var(--accent);border-radius:50%;
+  animation:spin .7s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ov-title{font-size:17px;font-weight:700}
+.ov-txt{color:var(--t2);font-size:13px;line-height:1.6;max-width:270px}
+.ov-btn{
+  margin-top:6px;padding:9px 22px;
+  background:rgba(var(--accent-rgb),.1);
+  border:1px solid rgba(var(--accent-rgb),.3);
+  border-radius:8px;color:var(--accent);font-weight:600;font-size:13px;cursor:pointer;
+}
+
+/* ── ACTIVE CHALLENGE STRIP ── */
+.ach-strip{display:flex;gap:7px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px}
+.ach-chip{
+  flex-shrink:0;
+  background:rgba(var(--green-rgb),.08);
+  border:1px solid rgba(var(--green-rgb),.2);
+  border-radius:8px;padding:5px 11px;
+  font-size:12px;font-weight:600;color:var(--green);
+  display:flex;align-items:center;gap:5px;
+}
+
+/* ── UNVON BAR ── */
+.unvon-bar{
+  background:var(--surf2);border:1px solid var(--border);
+  border-radius:var(--r-s);padding:10px 13px;margin-bottom:8px;
+}
+.unvon-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.unvon-name{font-size:13px;font-weight:600}
+.unvon-next{font-size:11px;color:var(--t3)}
+</style>
+</head>
+<body>
+
+<!-- ── OVERLAYS ── -->
+<div class="full-ov" id="ovLoad">
+  <div class="spinner"></div>
+  <div class="ov-title">Yuklanmoqda</div>
+  <div class="ov-txt" id="ovLoadTxt">Ma'lumotlar yuklanmoqda...</div>
+</div>
+<div class="full-ov hidden" id="ovErr">
+  <div style="font-size:36px">⚠️</div>
+  <div class="ov-title">Ulanib bo'lmadi</div>
+  <div class="ov-txt" id="ovErrTxt">Serverga ulanishda xatolik.</div>
+  <div class="ov-btn" onclick="init()">Qayta urinish</div>
+</div>
+
+<!-- ── HEADER ── -->
+<div class="hdr">
+  <div class="hdr-name">Shaxsiy Nazoratchi</div>
+  <div class="hdr-ball" id="hdrBall">0 ball</div>
+</div>
+
+<!-- ══════════════════════════════
+     PAGE: BUGUN
+══════════════════════════════ -->
+<div class="page on" id="p-today">
+  <!-- Welcome -->
+  <div class="home-top" id="wc">
+    <div class="hdr-left">
+      <div class="big-avatar" id="wcAv">👤</div>
+      <div>
+        <div class="home-name" id="wcName">—</div>
+        <div class="home-meta" id="wcLevel">Yuklanmoqda...</div>
+      </div>
+    </div>
+    <div class="ball-num" id="wcBall">0</div>
+    <div class="ball-lbl">umumiy ball</div>
+    <div class="pbar" style="margin-top:10px"><div class="pbar-f" id="wcBar" style="width:0%"></div></div>
+    <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--t3);margin-top:5px">
+      <span id="wcBarCur">0</span><span id="wcBarNxt">Keyingi unvon</span>
+    </div>
+  </div>
+
+  <!-- Intizom -->
+  <div class="intizom-ring-card">
+    <div class="ring-num" id="tdInt" style="color:var(--accent)">—</div>
+    <div class="ring-detail">
+      <div class="ring-title">Intizom indeksi</div>
+      <div class="ring-sub" id="tdIntRang">—</div>
+      <div class="pbar"><div class="pbar-f" id="tdIntBar" style="background:var(--green)"></div></div>
+    </div>
+  </div>
+
+  <!-- Namoz strip -->
+  <div class="sec">
+    <div class="sec-head">
+      <div class="sec-title">Bugungi namoz</div>
+      <div class="sec-badge" onclick="switchPage('namoz')">Barchasi →</div>
+    </div>
+    <div class="namoz-strip" id="tdNamozStrip"></div>
+  </div>
+
+  <!-- Bugungi rejalar -->
+  <div class="sec">
+    <div class="sec-head">
+      <div class="sec-title">Bugungi rejalar</div>
+      <div class="sec-badge" onclick="switchPage('vazifa')">Barchasi →</div>
+    </div>
+    <div id="tdTasks"></div>
+  </div>
+
+  <!-- Odatlar -->
+  <div class="sec">
+    <div class="sec-head">
+      <div class="sec-title">Odatlar</div>
+      <div class="sec-badge" onclick="switchPage('vazifa');setTab('vazifa','odatlar')">Barchasi →</div>
+    </div>
+    <div id="tdHabits"></div>
+  </div>
+
+  <!-- Active challenges -->
+  <div id="tdChallenges"></div>
+
+  <!-- Motivatsiya -->
+  <div class="motiv-card" id="tdMotiv"></div>
+</div>
+
+<!-- ══════════════════════════════
+     PAGE: VAZIFA
+══════════════════════════════ -->
+<div class="page" id="p-vazifa">
+  <div class="tabs" id="vazifa-tabs">
+    <div class="tab on" onclick="setTab('vazifa','kunlik')">Kunlik</div>
+    <div class="tab" onclick="setTab('vazifa','haftalik')">Haftalik</div>
+    <div class="tab" onclick="setTab('vazifa','odatlar')">Odatlar</div>
+    <div class="tab" onclick="setTab('vazifa','zikr')">Zikr</div>
+  </div>
+  <div id="vz-kunlik">
+    <div id="taskList"></div>
+    <button class="add-btn" onclick="openModal('task')">+ Reja qo'shish</button>
+  </div>
+  <div id="vz-haftalik" style="display:none">
+    <div id="wTaskList"></div>
+    <button class="add-btn" onclick="openModal('wtask')">+ Haftalik reja qo'shish</button>
+  </div>
+  <div id="vz-odatlar" style="display:none">
+    <div id="habitList"></div>
+    <button class="add-btn" onclick="openModal('habit')">+ Odat qo'shish</button>
+  </div>
+  <div id="vz-zikr" style="display:none">
+    <div id="zikrList"></div>
+    <button class="add-btn" onclick="openModal('zikr')">+ Zikr qo'shish</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     PAGE: NAMOZ
+══════════════════════════════ -->
+<div class="page" id="p-namoz">
+  <div class="namoz-info-txt" id="namozInfoTxt">—</div>
+
+  <!-- 5 namoz kartalar -->
+  <div class="namoz-grid" style="display:flex;flex-direction:column;gap:0" id="namozGrid"></div>
+
+  <!-- Streak + Bu kunlar -->
+  <div class="card" style="margin-bottom:10px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <span style="font-size:13px;font-weight:600">🔥 Namoz streak</span>
+      <span style="font-size:18px;font-weight:800;color:var(--amber)" id="namozStreak">0 kun</span>
+    </div>
+    <div id="cycleRow" style="display:none">
+      <button class="settings-toggle" id="cycleBtn" onclick="toggleCycle()">🌙 Bugun "Bu kunlar"ni yoqish</button>
+    </div>
+  </div>
+
+  <!-- Haftalik statistika -->
+  <div class="card">
+    <div class="card-lbl">Haftalik statistika</div>
+    <div class="namoz-stat-row">
+      <div class="ns-lbl">✅ O'qildi</div>
+      <div class="ns-bar"><div class="ns-fill" id="nb-oq" style="background:var(--green);width:0%"></div></div>
+      <div class="ns-cnt" id="nc-oq">0</div>
+    </div>
+    <div class="namoz-stat-row">
+      <div class="ns-lbl">⏳ Endi</div>
+      <div class="ns-bar"><div class="ns-fill" id="nb-en" style="background:var(--amber);width:0%"></div></div>
+      <div class="ns-cnt" id="nc-en">0</div>
+    </div>
+    <div class="namoz-stat-row">
+      <div class="ns-lbl">🔄 Qazo</div>
+      <div class="ns-bar"><div class="ns-fill" id="nb-qz" style="background:var(--red);width:0%"></div></div>
+      <div class="ns-cnt" id="nc-qz">0</div>
+    </div>
+  </div>
+
+  <button class="add-btn" style="background:var(--surf2);color:var(--t1);border:1px solid var(--border)" onclick="openModal('namoz')">⏰ Vaqtlarni yangilash</button>
+</div>
+
+<!-- ══════════════════════════════
+     PAGE: ORZULAR XARITASI
+══════════════════════════════ -->
+<div class="page" id="p-orzular">
+
+  <!-- Category filter chips -->
+  <div class="cat-chips" id="dreamCats">
+    <div class="cat-chip on" onclick="filterDreams('all',this)">✨ Barchasi</div>
+    <div class="cat-chip" onclick="filterDreams('martaba',this)">💼 Martaba</div>
+    <div class="cat-chip" onclick="filterDreams('oila',this)">🏠 Oila</div>
+    <div class="cat-chip" onclick="filterDreams('salomatlik',this)">💚 Salomatlik</div>
+    <div class="cat-chip" onclick="filterDreams('diin',this)">🕌 Diin</div>
+    <div class="cat-chip" onclick="filterDreams('moliya',this)">💰 Moliya</div>
+    <div class="cat-chip" onclick="filterDreams('sayohat',this)">✈️ Sayohat</div>
+  </div>
+
+  <!-- Dream grid -->
+  <div class="dream-grid" id="dreamGrid">
+    <div style="grid-column:1/-1">
+      <div class="empty"><div class="empty-icon">✨</div>
+      <div class="empty-txt">Yuklanmoqda...</div></div>
+    </div>
+  </div>
+
+  <!-- Stats strip -->
+  <div class="card" id="dreamStats" style="display:none">
+    <div class="card-lbl">Statistika</div>
+    <div style="display:flex;gap:0">
+      <div style="flex:1;text-align:center">
+        <div style="font-size:22px;font-weight:800;color:var(--accent)" id="dsTotalEl">0</div>
+        <div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">Jami</div>
+      </div>
+      <div style="flex:1;text-align:center">
+        <div style="font-size:22px;font-weight:800;color:var(--green)" id="dsAchEl">0</div>
+        <div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">Bajarildi</div>
+      </div>
+      <div style="flex:1;text-align:center">
+        <div style="font-size:22px;font-weight:800;color:var(--amber)" id="dsActiveEl">0</div>
+        <div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">Faol</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+<div class="page" id="p-profil">
+  <!-- Hero -->
+  <div class="profil-top">
+    <div class="profil-avatar" id="phAv">👤</div>
+    <div class="profil-name" id="phName">—</div>
+    <div class="profil-unvon" id="phUnvon">—</div>
+    <div class="ball-num" id="phBall">0</div>
+    <div class="ball-lbl">umumiy ball</div>
+    <div class="xp-bar-wrap">
+      <div class="unvon-row">
+        <span id="phBarCur"></span><span id="phBarNxt"></span>
+      </div>
+      <div class="pbar"><div class="pbar-f" id="phBar"></div></div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab on" onclick="setTab('profil','statistika')">📊 Statistika</div>
+    <div class="tab" onclick="setTab('profil','dokon')">🛒 Do'kon</div>
+    <div class="tab" onclick="setTab('profil','reyting')">👥 Reyting</div>
+    <div class="tab" onclick="setTab('profil','sozlamalar')">⚙️ Sozlamalar</div>
+  </div>
+
+  <!-- Statistika -->
+  <div id="pr-statistika">
+    <div class="intizom-ring-card" id="intizomRing">
+      <div class="ring-wrap">
+        <svg width="64" height="64" viewBox="0 0 64 64">
+          <circle cx="32" cy="32" r="27" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="5"/>
+          <circle class="rt" id="rt" cx="32" cy="32" r="27" fill="none" stroke="var(--accent)" stroke-width="5" stroke-linecap="round"/>
+        </svg>
+        <div class="ring-center"><div class="ring-num" id="ringN">—</div><div class="ring-sub">ball</div></div>
+      </div>
+      <div class="ring-info">
+        <div class="ring-title">Intizom indeksi</div>
+        <div class="ring-detail">
+          <div class="ring-row"><span>Reja</span><span id="ir-reja">—</span></div>
+          <div class="ring-row"><span>Namoz</span><span id="ir-namoz">—</span></div>
+          <div class="ring-row"><span>Odat</span><span id="ir-odat">—</span></div>
+          <div class="ring-row"><span>Streak</span><span id="ir-streak">—</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 14-kun trend -->
+    <div class="card">
+      <div class="card-lbl">14 kunlik trend</div>
+      <div class="chart-legend">
+        <div class="legend-i"><div class="legend-d" style="background:var(--accent)"></div>Reja</div>
+        <div class="legend-i"><div class="legend-d" style="background:var(--green)"></div>Namoz</div>
+        <div class="legend-i"><div class="legend-d" style="background:var(--amber)"></div>Intizom</div>
+      </div>
+      <div style="overflow-x:auto">
+        <canvas id="trendCanvas" height="160"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Do'kon -->
+  <div id="pr-dokon" style="display:none">
+    <div class="tabs" id="store-tabs">
+      <div class="tab on" onclick="setStoreTab('all')">Hammasi</div>
+      <div class="tab" onclick="setStoreTab('avatar_style')">Avatar</div>
+      <div class="tab" onclick="setStoreTab('frame')">Ramka</div>
+      <div class="tab" onclick="setStoreTab('badge')">Nishon</div>
+    </div>
+    <div class="store-grid" id="storeGrid"></div>
+  </div>
+
+  <!-- Reyting -->
+  <div id="pr-reyting" style="display:none">
+    <div id="ratingList"></div>
+  </div>
+
+  <!-- Sozlamalar -->
+  <div id="pr-sozlamalar" style="display:none">
+    <div class="card-lbl" style="margin-bottom:10px">Shaxsiy ma'lumot</div>
+    <div class="card" style="margin-bottom:8px" style="margin-bottom:7px">
+      <div>
+        <div class="settings-row" style="margin-bottom:3px">Jins</div>
+        <div class="home-meta" id="genderVal">Tanlanmagan</div>
+      </div>
+      <button class="settings-toggle" onclick="openModal('gender')">O'zgartirish</button>
+    </div>
+    <div class="card" style="margin-bottom:8px">
+      <div>
+        <div class="settings-row" style="margin-bottom:3px">Kun yakuni vaqti</div>
+        <div class="home-meta" id="dayEndVal">22:00</div>
+      </div>
+      <input type="time" class="inp" style="width:auto;padding:6px 10px" id="dayEndInp" onchange="saveDayEnd()">
+    </div>
+
+    <div class="card-lbl" style="margin:16px 0 10px">Ko'rinish</div>
+    <div class="card" style="margin-bottom:8px" style="margin-bottom:7px">
+      <div>
+        <div class="settings-row" style="margin-bottom:3px">Yorug' fon</div>
+        <div class="home-meta">Oq/qora mavzu</div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="themeToggle" onchange="toggleTheme()"><div class="toggle-sl"></div></label>
+    </div>
+
+    <div id="cycleSection" style="display:none">
+      <div class="card-lbl" style="margin:14px 0 8px">🌙 Bu kunlar</div>
+      <button class="settings-toggle" id="cycleBtnSetting" onclick="toggleCycle()">🌙 Bugun "Bu kunlar"ni yoqish</button>
+      <div style="font-size:11px;color:var(--t3);line-height:1.5;margin-top:8px">Yoqilganda namoz eslatmalari yuborilmaydi va statistikaga ta'sir qilmaydi.</div>
+      <div style="margin-top:14px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:14px;font-weight:600">🔥 Namoz streak</span>
+        <span style="font-size:20px;font-weight:800;color:var(--amber)" id="settingStreakVal">0 kun</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PAGE: STATISTIKA ══ -->
+<div class="page" id="p-stat">
+  <div class="period-row">
+    <button class="period-btn on" onclick="switchPeriod('daily',this)">Bugun</button>
+    <button class="period-btn" onclick="switchPeriod('weekly',this)">Hafta</button>
+    <button class="period-btn" onclick="switchPeriod('monthly',this)">Oy</button>
+  </div>
+
+  <!-- Intizom ring -->
+  <div class="intizom-ring-card">
+    <div class="ring-wrap">
+      <svg width="64" height="64" viewBox="0 0 64 64">
+        <circle cx="32" cy="32" r="27" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="5"/>
+        <circle class="rt" id="rt" cx="32" cy="32" r="27" fill="none"
+          stroke="var(--accent)" stroke-width="5" stroke-linecap="round"
+          style="stroke-dasharray:170;stroke-dashoffset:170;transition:stroke-dashoffset 1s cubic-bezier(.4,0,.2,1)"/>
+      </svg>
+      <div class="ring-center">
+        <div class="ring-num" id="intizomBig">—</div>
+        <div class="ring-sub">ball</div>
+      </div>
+    </div>
+    <div class="ring-detail">
+      <div class="ring-title" id="intizomRangBig">—</div>
+      <div class="ring-row"><span>Reja</span><span id="iReja">— pt</span></div>
+      <div class="ring-row"><span>Namoz</span><span id="iNamoz">— pt</span></div>
+      <div class="ring-row"><span>Odat</span><span id="iOdat">— pt</span></div>
+      <div class="ring-row"><span>Streak</span><span id="iStreak">— pt</span></div>
+    </div>
+  </div>
+
+  <!-- Chart -->
+  <div class="card">
+    <div class="card-lbl" id="reportTitle">Bugungi hisobot</div>
+    <div class="chart-legend">
+      <div class="legend-i"><div class="legend-d" style="background:var(--accent)"></div>Bajarildi</div>
+      <div class="legend-i"><div class="legend-d" style="background:var(--surf3)"></div>Jami</div>
+    </div>
+    <div class="chart-wrap" id="chartWrap"></div>
+  </div>
+
+  <!-- 14-kun trend -->
+  <div class="card">
+    <div class="card-lbl">14 kunlik trend</div>
+    <div class="chart-legend">
+      <div class="legend-i"><div class="legend-d" style="background:var(--accent)"></div>Reja %</div>
+      <div class="legend-i"><div class="legend-d" style="background:var(--green)"></div>Namoz %</div>
+      <div class="legend-i"><div class="legend-d" style="background:var(--amber)"></div>Intizom</div>
+    </div>
+    <div class="trend-canvas-wrap">
+      <canvas id="trendCanvas" height="160"></canvas>
+    </div>
+  </div>
+
+  <!-- Heatmap -->
+  <div class="card">
+    <div class="card-lbl">Faollik xaritasi</div>
+    <div class="heatmap-grid" id="heatmapGrid"></div>
+    <div style="display:flex;justify-content:flex-end;align-items:center;gap:5px;font-size:10px;color:var(--t3);margin-top:6px">
+      Kam <div style="display:flex;gap:2px;margin:0 4px">
+        <div style="width:10px;height:10px;border-radius:2px;background:var(--surf3)"></div>
+        <div class="hm-cell l1" style="width:10px;height:10px;border-radius:2px"></div>
+        <div class="hm-cell l2" style="width:10px;height:10px;border-radius:2px"></div>
+        <div class="hm-cell l3" style="width:10px;height:10px;border-radius:2px"></div>
+        <div class="hm-cell l4" style="width:10px;height:10px;border-radius:2px"></div>
+      </div> Ko'p
+    </div>
+  </div>
+
+  <!-- Reyting -->
+  <div class="card">
+    <div class="card-lbl">Reyting</div>
+    <div id="ratingList"></div>
+  </div>
+</div>
+
+<!-- ── NAV ── -->
+<nav class="nav">
+  <button class="nav-btn on" onclick="switchPage('today',this)" id="n-today">
+    <span class="nav-icon">🏠</span>Bugun
+  </button>
+  <button class="nav-btn" onclick="switchPage('namoz',this)" id="n-namoz">
+    <span class="nav-icon">🕌</span>Namoz
+  </button>
+  <button class="nav-btn" onclick="switchPage('orzular',this)" id="n-orzular">
+    <span class="nav-icon">🗺</span>Orzular
+  </button>
+  <button class="nav-btn" onclick="switchPage('stat',this)" id="n-stat">
+    <span class="nav-icon">📊</span>Statistika
+  </button>
+  <button class="nav-btn" onclick="switchPage('profil',this)" id="n-profil">
+    <span class="nav-icon">👤</span>Profil
+  </button>
+</nav>
+
+<!-- ══════════════════════════════
+     MODALS
+══════════════════════════════ -->
+
+<!-- Task modal -->
+<div class="ov" id="m-task" onclick="closeOv(event,'m-task')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Reja qo'shish</div>
+    <div class="inp-g"><label class="inp-lbl">Nomi</label><input class="inp" id="tName" placeholder="Reja nomini kiriting..."></div>
+    <div class="inp-g"><label class="inp-lbl">Vaqti</label><input class="inp" type="time" id="tTime"></div>
+    <div class="inp-g">
+      <label class="inp-lbl">Kategoriya</label>
+      <div class="chips" id="tCat">
+        <div class="chip on" data-val="ish">💼 Ish</div>
+        <div class="chip" data-val="shaxsiy">👤 Shaxsiy</div>
+        <div class="chip" data-val="soglik">💪 Sog'liq</div>
+        <div class="chip" data-val="talim">📚 Ta'lim</div>
+        <div class="chip" data-val="boshqa">📌 Boshqa</div>
+      </div>
+    </div>
+    <div class="inp-g">
+      <label class="inp-lbl">Muhimlik</label>
+      <div class="chips" id="tPri">
+        <div class="chip on" data-val="shoshilinch">🔴 Shoshilinch</div>
+        <div class="chip" data-val="orta">🟡 O'rta</div>
+        <div class="chip" data-val="oddiy">🟢 Oddiy</div>
+      </div>
+    </div>
+    <button class="add-btn" onclick="saveTask()">✅ Saqlash</button>
+  </div>
+</div>
+
+<!-- Weekly task modal -->
+<div class="ov" id="m-wtask" onclick="closeOv(event,'m-wtask')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Haftalik reja</div>
+    <div class="inp-g"><label class="inp-lbl">Nomi</label><input class="inp" id="wtName" placeholder="Haftalik reja..."></div>
+    <div class="inp-g"><label class="inp-lbl">Vaqti</label><input class="inp" type="time" id="wtTime"></div>
+    <button class="add-btn" onclick="saveWTask()">✅ Saqlash</button>
+  </div>
+</div>
+
+<!-- Habit modal -->
+<div class="ov" id="m-habit" onclick="closeOv(event,'m-habit')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Odat qo'shish</div>
+    <div class="inp-g"><label class="inp-lbl">Nomi</label><input class="inp" id="hName" placeholder="Odat nomini kiriting..."></div>
+    <div class="inp-g">
+      <label class="inp-lbl">Emoji</label>
+      <div class="chips" id="hEmoji">
+        <div class="chip on" data-val="📖">📖</div><div class="chip" data-val="🏃">🏃</div>
+        <div class="chip" data-val="💧">💧</div><div class="chip" data-val="🧘">🧘</div>
+        <div class="chip" data-val="📝">📝</div><div class="chip" data-val="🎯">🎯</div>
+        <div class="chip" data-val="💪">💪</div><div class="chip" data-val="🌿">🌿</div>
+      </div>
+    </div>
+    <button class="add-btn" onclick="saveHabit()">✅ Saqlash</button>
+  </div>
+</div>
+
+<!-- Goal modal -->
+<div class="ov" id="m-goal" onclick="closeOv(event,'m-goal')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Maqsad qo'shish</div>
+    <div class="inp-g"><label class="inp-lbl">Sarlavha</label><input class="inp" id="gTitle" placeholder="Maqsad..."></div>
+    <div class="inp-g"><label class="inp-lbl">Muddat</label><input class="inp" type="date" id="gDeadline"></div>
+    <div class="inp-g"><label class="inp-lbl">Mukofot (o'zingizga)</label><input class="inp" id="gReward" placeholder="Masalan: yangi kitob sotib olaman"></div>
+    <button class="add-btn" onclick="saveGoal()">✅ Saqlash</button>
+  </div>
+</div>
+
+<!-- Reward modal -->
+<div class="ov" id="m-reward" onclick="closeOv(event,'m-reward')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Mukofot qo'shish</div>
+    <div class="inp-g"><label class="inp-lbl">Nomi</label><input class="inp" id="rwTitle" placeholder="Mukofot nomi..."></div>
+    <div class="inp-g"><label class="inp-lbl">Ball narxi</label><input class="inp" type="number" id="rwCost" placeholder="100" min="1"></div>
+    <button class="add-btn" onclick="saveReward()">✅ Saqlash</button>
+  </div>
+</div>
+
+<!-- Zikr modal -->
+<div class="ov" id="m-zikr" onclick="closeOv(event,'m-zikr')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Zikr qo'shish</div>
+    <div class="inp-g"><label class="inp-lbl">Nomi</label><input class="inp" id="zName" placeholder="Subhanalloh, Allahu Akbar..."></div>
+    <div class="inp-g">
+      <label class="inp-lbl">Emoji</label>
+      <div class="chips" id="zEmoji">
+        <div class="chip on" data-val="📿">📿</div><div class="chip" data-val="🤲">🤲</div>
+        <div class="chip" data-val="☪️">☪️</div><div class="chip" data-val="🌙">🌙</div>
+        <div class="chip" data-val="⭐">⭐</div><div class="chip" data-val="💎">💎</div>
+      </div>
+    </div>
+    <div class="inp-g">
+      <label class="inp-lbl">Maqsad soni</label>
+      <div class="chips" id="zTarget">
+        <div class="chip" data-val="11">11</div><div class="chip on" data-val="33">33</div>
+        <div class="chip" data-val="99">99</div><div class="chip" data-val="100">100</div><div class="chip" data-val="500">500</div>
+      </div>
+    </div>
+    <button class="add-btn" onclick="saveZikr()">✅ Saqlash</button>
+  </div>
+</div>
+
+<!-- Namoz times modal -->
+<div class="ov" id="m-namoz" onclick="closeOv(event,'m-namoz')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Namoz vaqtlari</div>
+    <div class="inp-g"><label class="inp-lbl">☁️ Bomdod</label><input class="inp" type="time" id="nt_bomdod"></div>
+    <div class="inp-g"><label class="inp-lbl">🌞 Peshin</label><input class="inp" type="time" id="nt_peshin"></div>
+    <div class="inp-g"><label class="inp-lbl">🌤 Asr</label><input class="inp" type="time" id="nt_asr"></div>
+    <div class="inp-g"><label class="inp-lbl">🌆 Shom</label><input class="inp" type="time" id="nt_shom"></div>
+    <div class="inp-g"><label class="inp-lbl">🌃 Xufton</label><input class="inp" type="time" id="nt_xufton"></div>
+    <button class="add-btn" onclick="saveNamozTimes()">✅ Saqlash</button>
+  </div>
+</div>
+
+<!-- Namoz belgilash modal -->
+<div class="ov" id="m-picknamoz" onclick="closeOv(event,'m-picknamoz')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="pickNamozTitle">Namoz</div>
+    <input type="hidden" id="pickNamozKey">
+    <button class="add-btn" onclick="toggleNamoz(document.getElementById('pickNamozKey').value,'oqildi')">✅ O'qidim</button>
+    <button class="add-btn" style="background:rgba(245,158,11,.15);color:var(--amber);margin-top:6px"
+      onclick="toggleNamoz(document.getElementById('pickNamozKey').value,'endi_oqiyman')">⏳ Hozir o'qiyman</button>
+    <button class="add-btn" style="background:rgba(239,68,68,.12);color:var(--red);margin-top:6px"
+      onclick="toggleNamoz(document.getElementById('pickNamozKey').value,'qazo')">🔄 Qazo</button>
+    <button class="add-btn" style="background:var(--surf2);color:var(--t2);margin-top:6px;border:1px solid var(--border)"
+      onclick="closeModal('m-picknamoz')">Bekor</button>
+  </div>
+</div>
+
+<!-- Gender modal -->
+<div class="ov" id="m-gender" onclick="closeOv(event,'m-gender')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Jins tanlash</div>
+    <div class="inp-g">
+      <div class="chips" id="genderChips">
+        <div class="chip on" data-val="erkak">👨 Erkak</div>
+        <div class="chip" data-val="ayol">👩 Ayol</div>
+      </div>
+    </div>
+    <button class="add-btn" onclick="saveGender(getChip('genderChips'))">✅ Saqlash</button>
+  </div>
+</div>
+
+<!-- Dream add modal -->
+<div class="ov" id="m-dream" onclick="closeOv(event,'m-dream')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">✨ Orzu qo'shish</div>
+    <div class="inp-g"><label class="inp-lbl">Nomi</label>
+      <input class="inp" id="drTitle" placeholder="Mening orzuim..."></div>
+    <div class="inp-g"><label class="inp-lbl">Tavsif (ixtiyoriy)</label>
+      <input class="inp" id="drDesc" placeholder="Bu orzu haqida qisqacha..."></div>
+    <div class="inp-g">
+      <label class="inp-lbl">Emoji</label>
+      <div class="chips" id="drEmoji">
+        <div class="chip on" data-val="⭐">⭐</div>
+        <div class="chip" data-val="🏠">🏠</div>
+        <div class="chip" data-val="✈️">✈️</div>
+        <div class="chip" data-val="💼">💼</div>
+        <div class="chip" data-val="❤️">❤️</div>
+        <div class="chip" data-val="📚">📚</div>
+        <div class="chip" data-val="💪">💪</div>
+        <div class="chip" data-val="🏆">🏆</div>
+        <div class="chip" data-val="💰">💰</div>
+        <div class="chip" data-val="🌍">🌍</div>
+        <div class="chip" data-val="🎓">🎓</div>
+        <div class="chip" data-val="🤲">🤲</div>
+      </div>
+    </div>
+    <div class="inp-g">
+      <label class="inp-lbl">Kategoriya</label>
+      <div class="chips" id="drCat">
+        <div class="chip on" data-val="shaxsiy">✨ Shaxsiy</div>
+        <div class="chip" data-val="martaba">💼 Martaba</div>
+        <div class="chip" data-val="oila">🏠 Oila</div>
+        <div class="chip" data-val="salomatlik">💚 Salomatlik</div>
+        <div class="chip" data-val="diin">🕌 Diin</div>
+        <div class="chip" data-val="moliya">💰 Moliya</div>
+        <div class="chip" data-val="sayohat">✈️ Sayohat</div>
+      </div>
+    </div>
+    <button class="add-btn" onclick="saveDream()">✅ Qo'shish</button>
+  </div>
+</div>
+
+<!-- Dream detail modal -->
+<div class="ov" id="ov-dream-detail" onclick="closeOv(event,'ov-dream-detail')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div id="dreamDetailContent"></div>
+    <button class="add-btn" style="background:var(--surf2);color:var(--t1);border:1px solid var(--border);margin-top:4px"
+      onclick="closeOv('ov-dream-detail')">Yopish</button>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════
+//  CONFIG & CONSTANTS
+// ════════════════════════════════════════════════════════════
+const tg = window.Telegram?.WebApp;
+let initData = '';
+let S = null;
+let storeItems = [];
+let dreamItems = [];
+let dreamFilter = 'all';
+let activeDreamId = null;
+let trendChart = null;
+let curPage = 'today';
+
+const NAMOZ_NAMES = {bomdod:'Bomdod',peshin:'Peshin',asr:'Asr',shom:'Shom',xufton:'Xufton'};
+const NAMOZ_ORDER  = ['bomdod','peshin','asr','shom','xufton'];
+const NAMOZ_EMOJI  = {bomdod:'☁️',peshin:'🌞',asr:'🌤',shom:'🌆',xufton:'🌃'};
+const NAMOZ_HOLAT  = {null:'',oqildi:'✓',endi_oqiyman:'⏳',qazo:'🔄'};
+const NAMOZ_KEY_MAP = {bomdod:'Bomdod ☁️',peshin:'Peshin 🌞',asr:'Asr 🌤',shom:'Shom 🌆',xufton:'Xufton 🌃'};
+const NAMOZ_KEY_REV = Object.fromEntries(Object.entries(NAMOZ_KEY_MAP).map(([k,v])=>[v,k]));
+const NAMOZ_TO_APP  = {oqildi:'oqildi',endi_oqiyman:'endi',qazo:'qazo'};
+
+const CAT_COLOR = {shaxsiy:'accent',oila:'pink',ish:'green',soglik:'amber',diniy:'purple',talim:'cyan',moliyaviy:'gold',sayohat:'teal'};
+const CAT_LABEL = {shaxsiy:'Shaxsiy',oila:'Oila',ish:'Ish',soglik:"Sog'liq",diniy:'Diniy',talim:"Ta'lim",moliyaviy:'Moliyaviy',sayohat:'Sayohat'};
+const MOTIVLAR = ['🌅 Har bir qadam maqsadga yaqinlashtiradi!','💪 Bugun kichik harakat — ertaga katta natija!','🎯 Izchillik — muvaffaqiyatning kaliti!','🌟 Siz qila olasiz. Davom eting!','⚡ Bugungi mehnat — ertangi farovonlik!'];
+
+// ════════════════════════════════════════════════════════════
+//  API LAYER
+// ════════════════════════════════════════════════════════════
+function apiGet(path, params={}) {
+  const p = new URLSearchParams({...params, init_data: initData});
+  return fetch(`${path}?${p}`).then(async r => {
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'HTTP '+r.status);
+    return d;
+  });
+}
+function apiPost(path, body={}) {
+  return fetch(path, {method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({...body,init_data:initData})}).then(async r => {
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'HTTP '+r.status);
+    return d;
+  });
+}
+
+// ════════════════════════════════════════════════════════════
+//  THEME
+// ════════════════════════════════════════════════════════════
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t==='light'?'light':'dark');
+  const bg = t==='light'?'#f2f3f7':'#0c0e14';
+  try { if(tg){tg.setHeaderColor(bg);tg.setBackgroundColor(bg);} } catch(e){}
+}
+
+// ════════════════════════════════════════════════════════════
+//  NAVIGATION
+// ════════════════════════════════════════════════════════════
+const PAGES = {
+  today:'p-today', namoz:'p-namoz', orzular:'p-orzular',
+  stat:'p-stat',   profil:'p-profil',
+  vazifa:'p-today',
+};
+function switchPage(page, el) {
+  const pid = PAGES[page] || 'p-today';
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.nav-btn').forEach(n=>n.classList.remove('on'));
+  const pg = document.getElementById(pid); if(pg) pg.classList.add('on');
+  const nb = el || document.getElementById('n-'+page); if(nb) nb.classList.add('on');
+  curPage = page;
+  if (page==='profil') onProfilEnter();
+  if (page==='namoz')  renderNamoz();
+  if (page==='orzular'){ loadDreams(); renderGoals(); renderRewards(); loadChallenges(); }
+  const fab = document.getElementById('dreamFab');
+  if(fab) fab.style.display = page==='orzular' ? '' : 'none';
+  if (page==='stat')   { loadIntizom(); loadTrend(); loadHeatmap(); loadRating(); }
+}
+
+function setTab(page, tab) {
+  if (page==='vazifa') {
+    ['kunlik','haftalik','odatlar','zikr'].forEach(t=>{
+      document.getElementById('vz-'+t).style.display = t===tab?'':'none';
+    });
+    document.querySelectorAll('#vazifa-tabs .tab').forEach((el,i)=>{
+      const tabs = ['kunlik','haftalik','odatlar','zikr'];
+      el.classList.toggle('on', tabs[i]===tab);
+    });
+    if(tab==='odatlar') renderHabits();
+    if(tab==='zikr') renderZikrs();
+  }
+  if (page==='orzular') {
+    ['orzular','maqsad','mukofot','challenge'].forEach(t=>{
+      document.getElementById('oz-'+t).style.display = t===tab?'':'none';
+    });
+    document.querySelectorAll('#p-orzular .tabs .tab').forEach((el,i)=>{
+      const tabs=['orzular','maqsad','mukofot','challenge'];
+      el.classList.toggle('on',tabs[i]===tab);
+    });
+  }
+  if (page==='profil') {
+    ['statistika','dokon','reyting','sozlamalar'].forEach(t=>{
+      document.getElementById('pr-'+t).style.display = t===tab?'':'none';
+    });
+    document.querySelectorAll('#p-profil .tabs .tab').forEach((el,i)=>{
+      const tabs=['statistika','dokon','reyting','sozlamalar'];
+      el.classList.toggle('on',tabs[i]===tab);
+    });
+    if(tab==='dokon') loadStore();
+    if(tab==='reyting') loadRating();
+    if(tab==='statistika') { loadIntizom(); loadTrend(); }
+    if(tab==='sozlamalar') renderSettings();
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+//  MODAL MANAGEMENT
+// ════════════════════════════════════════════════════════════
+function openModal(id) {
+  const el = document.getElementById(id) || document.getElementById('m-'+id);
+  if(el) el.classList.add('open');
+}
+function closeModal(id) {
+  const el = document.getElementById(id) || document.getElementById('m-'+id);
+  if(el) el.classList.remove('open');
+}
+// openOv — dream detail va boshqa overlay'lar uchun
+function openOv(id) {
+  const el = document.getElementById(id);
+  if(el) el.classList.add('open');
+}
+function closeOv(eOrId, id) {
+  // closeOv(event, 'modal-id') — backdrop tapda yopish
+  // closeOv('modal-id') — dasturiy yopish
+  if(typeof eOrId === 'string') {
+    const el = document.getElementById(eOrId);
+    if(el) el.classList.remove('open');
+    return;
+  }
+  if(id && eOrId.target === document.getElementById(id)) {
+    document.getElementById(id).classList.remove('open');
+  }
+}
+function getChip(groupId) {
+  const el = document.querySelector('#'+groupId+' .chip.on');
+  return el ? el.dataset.val : null;
+}
+
+
+// ════════════════════════════════════════════════════════════
+//  TOAST
+// ════════════════════════════════════════════════════════════
+function toast(msg) {
+  const old = document.querySelector('.toast');
+  if(old) old.remove();
+  const t = document.createElement('div');
+  t.className='toast'; t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),2400);
+}
+
+// ════════════════════════════════════════════════════════════
+//  DATA LOADING
+// ════════════════════════════════════════════════════════════
+async function loadData() {
+  S = await apiGet('/api/data');
+  applyTheme(S.user.theme);
+}
+
+async function refresh() {
+  S = await apiGet('/api/data');
+  renderAll();
+}
+
+function renderAll() {
+  renderHeader();
+  renderToday();
+  renderTasks();
+  renderNamoz();
+  if(curPage==='profil') onProfilEnter();
+}
+
+// ════════════════════════════════════════════════════════════
+//  HEADER
+// ════════════════════════════════════════════════════════════
+function renderHeader() {
+  if(!S) return;
+  document.getElementById('hdrBall').textContent = S.user.ball + ' ball';
+}
+
+// ════════════════════════════════════════════════════════════
+//  PAGE: BUGUN
+// ════════════════════════════════════════════════════════════
+function renderToday() {
+  if(!S) return;
+  const {user,unvon,level,next_ball,next_unvon,intizom_score,intizom_rang,avatar,
+         daily_tasks,namoz_today,namoz_times,habits,active_challenges,namoz_streak,cycle_today} = S;
+
+  // Welcome card
+  document.getElementById('wcAv').textContent = avatar?.style==='warrior'?'⚔️':avatar?.style||'👤';
+  document.getElementById('wcName').textContent = user.name || '—';
+  document.getElementById('wcLevel').textContent = (unvon||'') + ' • Daraja ' + level;
+  document.getElementById('wcBall').textContent = user.ball;
+  document.getElementById('hdrBall').textContent = user.ball + ' ball';
+
+  // Progress to next level
+  const curBallBase = (level-1)*100; // rough
+  const range = (next_ball||100) - curBallBase;
+  const done = user.ball - curBallBase;
+  const pct = Math.min(100, Math.max(0, Math.round(done/range*100)));
+  document.getElementById('wcBar').style.width = pct + '%';
+  document.getElementById('wcBarCur').textContent = user.ball + ' ball';
+  document.getElementById('wcBarNxt').textContent = next_unvon ? next_ball + ' → ' + next_unvon : '';
+
+  // Intizom
+  const score = intizom_score || 0;
+  const scoreColor = score>=80?'var(--green)':score>=60?'var(--amber)':'var(--red)';
+  document.getElementById('tdInt').textContent = score;
+  document.getElementById('tdInt').style.color = scoreColor;
+  document.getElementById('tdIntRang').textContent = intizom_rang || '—';
+  document.getElementById('tdIntBar').style.width = score + '%';
+  document.getElementById('tdIntBar').style.background = scoreColor;
+
+  // Namoz strip — kompakt kartalar
+  const stripEl = document.getElementById('tdNamozStrip');
+  const isCycleToday = cycle_today;
+  stripEl.innerHTML = NAMOZ_ORDER.map(n => {
+    const stat = isCycleToday ? 'cycle' : (namoz_today?.[n] || null);
+    const time = namoz_times?.[n] || '--:--';
+    const icon = isCycleToday?'🌙':stat==='oqildi'?'✓':stat==='endi'?'⏳':stat==='qazo'?'↩':'';
+    return `<div class="namoz-item" style="margin-bottom:6px" onclick="pickNamoz('${n}')">
+      <div class="namoz-left">
+        <div class="namoz-icon">${NAMOZ_EMOJI[n]}</div>
+        <div><div class="namoz-name">${NAMOZ_NAMES[n]}</div>
+          <div class="namoz-time">${time}</div></div>
+      </div>
+      <div class="namoz-ck${stat&&!isCycleToday?" "+stat:""}">${icon}</div>
+    </div>`;
+  }).join('');
+
+  // Tasks (max 5)
+  const taskEl = document.getElementById('tdTasks');
+  const todayTasks = (daily_tasks||[]).slice(0,5);
+  if(!todayTasks.length) {
+    taskEl.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><div class="empty-txt">Bugun uchun reja yo\'q<br>Vazifa bo\'limidan qo\'shing</div></div>';
+  } else {
+    taskEl.innerHTML = todayTasks.map(t => {
+      const done = t.status===1||t.status==='1';
+      return `<div class="task-item ${done?"done":""}" onclick="toggleTask(${t.id})">
+        <div class="task-check">${done?"✓":""}</div>
+        <div class="task-info"><div class="task-name">${escHtml(t.task_name)}</div>
+          <div class="task-meta">${t.category||""}</div></div>
+        <div class="task-time">${t.task_time||""}</div>
+      </div>`;
+    }).join('');
+  }
+
+  // Habits (max 4)
+  const habitEl = document.getElementById('tdHabits');
+  const todayHabits = (habits||[]).slice(0,4);
+  if(!todayHabits.length) {
+    habitEl.innerHTML = '<div style="font-size:12px;color:var(--t3);text-align:center;padding:12px">Odatlar yo\'q</div>';
+  } else {
+    habitEl.innerHTML = todayHabits.map(h => `
+      <div class="habit-item">
+        <div class="habit-emoji">${h.emoji||"🎯"}</div>
+        <div class="habit-inf"><div class="habit-name">${escHtml(h.name)}</div>
+          <div class="habit-streak">${h.streak?"🔥 "+h.streak+" kun":"Hali streak yo'q"}</div></div>
+        <div class="habit-ck ${h.done?"ok":""}" onclick="toggleHabit(${h.id})">${h.done?"✓":"○"}</div>
+      </div>`).join('');
+  }
+
+  // Active challenges
+  const chEl = document.getElementById('tdChallenges');
+  const chs = active_challenges || [];
+  chEl.innerHTML = chs.length ? `
+    <div class="ach-strip">${chs.map(c=>`<div class="ach-chip">${c.emoji} ${escHtml(c.title)}</div>`).join("")}</div>
+  ` : '';
+
+  // Motivatsiya
+  document.getElementById('tdMotiv').textContent = MOTIVLAR[Math.floor(Math.random()*MOTIVLAR.length)];
+}
+
+function clickNamozStrip(key) {
+  switchPage('namoz');
+}
+
+// ════════════════════════════════════════════════════════════
+//  PAGE: VAZIFA
+// ════════════════════════════════════════════════════════════
+function renderTasks() {
+  if(!S) return;
+  const {daily_tasks, weekly_tasks} = S;
+
+  // Kunlik
+  const el = document.getElementById('taskList');
+  if(!(daily_tasks||[]).length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><div class="empty-txt">Bugun uchun reja yo\'q</div></div>';
+  } else {
+    el.innerHTML = daily_tasks.map(t => {
+      const done = t.status===1||t.status==='1';
+      const prCls = t.priority==='shoshilinch'?'pd-high':t.priority==='orta'?'pd-med':'pd-low';
+      return `<div class="task-item ${done?"done":""}" onclick="toggleTask(${t.id})">
+        <div class="task-check">${done?"✓":""}</div>
+        <div class="task-info">
+          <div class="task-name">${escHtml(t.task_name)}</div>
+          <div class="task-meta">
+            <div class="priority-dot ${prCls}"></div>
+            <span>${t.category||""}</span>
+          </div>
+        </div>
+        <div class="task-time">${t.task_time||""}</div>
+      </div>`;
+    }).join('');
+  }
+
+  // Haftalik
+  const wel = document.getElementById('wTaskList');
+  if(!(weekly_tasks||[]).length) {
+    wel.innerHTML = '<div class="empty"><div class="empty-icon">📅</div><div class="empty-txt">Haftalik reja yo\'q</div></div>';
+  } else {
+    wel.innerHTML = weekly_tasks.map(t => `
+      <div class="task-item">
+        <div class="task-check" style="width:6px;height:6px;border-radius:3px;border:none" style="background:var(--accent)"></div>
+        <div style="flex:1;font-size:13px;font-weight:500">${escHtml(t.task_name)}</div>
+        <div style="font-size:11px;color:var(--accent);font-weight:700">${t.task_time||""}</div>
+      </div>`).join('');
+  }
+}
+
+function renderHabits() {
+  if(!S) return;
+  const el = document.getElementById('habitList');
+  const habits = S.habits || [];
+  if(!habits.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">🎯</div><div class="empty-txt">Hali odat yo\'q<br>Odatlarni kuzatib boring</div></div>';
+    return;
+  }
+  el.innerHTML = habits.map(h => `
+    <div class="habit-item">
+      <div class="habit-emoji">${h.emoji||"🎯"}</div>
+      <div class="habit-inf">
+        <div class="habit-name">${escHtml(h.name)}</div>
+        <div class="habit-streak">${h.streak?"🔥 "+h.streak+" kun ketma-ket":"Hali streak yo'q"}</div>
+      </div>
+      <div class="hf-check ${h.done?"done":""}" onclick="toggleHabit(${h.id})">${h.done?"✓":"○"}</div>
+    </div>`).join('');
+}
+
+function renderZikrs() {
+  if(!S) return;
+  const el = document.getElementById('zikrList');
+  const zikrs = S.zikrs || [];
+  if(!zikrs.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">📿</div><div class="empty-txt">Hali zikr yo\'q</div></div>';
+    return;
+  }
+  el.innerHTML = zikrs.map(z => {
+    const pct = Math.min(100, Math.round((z.today_count/z.target_count)*100));
+    return `<div class="zikr-card">
+      <div class="zikr-hdr">
+        <div class="zikr-em">${z.emoji}</div>
+        <div class="zikr-nblock">
+          <div class="zikr-nm">${escHtml(z.name)}</div>
+          <div class="zikr-today">Bugun: ${z.today_count}/${z.target_count}</div>
+        </div>
+      </div>
+      <div class="zikr-cnt">${z.today_count}</div>
+      <div class="zikr-target">Maqsad: ${z.target_count}</div>
+      <div class="zikr-pbar"><div class="zikr-pf" style="width:${pct}%"></div></div>
+      <div class="zikr-btns">
+        <div class="zikr-btn" onclick="clickZikr(${z.id},1)">+1</div>
+        <div class="zikr-btn" onclick="clickZikr(${z.id},10)">+10</div>
+        <div class="zikr-btn" onclick="clickZikr(${z.id},33)">+33</div>
+        <div class="zikr-btn" onclick="clickZikr(${z.id},100)">+100</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════════════════════
+//  PAGE: NAMOZ
+// ════════════════════════════════════════════════════════════
+function renderNamoz() {
+  if(!S) return;
+  const {namoz_today,namoz_times,namoz_days_left,namoz_week,namoz_streak,cycle_today,user} = S;
+
+  // Info text
+  const isCycle = cycle_today;
+  const infoEl = document.getElementById('namozInfoTxt');
+  if(isCycle) {
+    infoEl.textContent = '🌙 Bugun "Bu kunlar" — eslatmalar yuborilmaydi';
+    infoEl.style.color = 'var(--cyan)';
+  } else if(namoz_times && namoz_days_left!=null) {
+    infoEl.textContent = `⏰ Joriy vaqtlar yana ${namoz_days_left} kun amal qiladi`;
+    infoEl.style.color = '';
+  } else {
+    infoEl.textContent = '⚠️ Namoz vaqtlari kiritilmagan — pastdan kiriting';
+    infoEl.style.color = 'var(--amber)';
+  }
+
+  // Grid
+  const grid = document.getElementById('namozGrid');
+  grid.innerHTML = NAMOZ_ORDER.map(n => {
+    const stat = namoz_today?.[n] || null;
+    const time = namoz_times?.[n] || '--:--';
+    const icon = isCycle?'🌙':stat==='oqildi'?'✓':stat==='endi'?'⏳':stat==='qazo'?'↩':'';
+    return `<div class="namoz-item">
+      <div class="namoz-left">
+        <div class="namoz-icon">${NAMOZ_EMOJI[n]}</div>
+        <div>
+          <div class="namoz-name">${NAMOZ_KEY_MAP[n]}</div>
+          <div class="namoz-time">${time}</div>
+        </div>
+      </div>
+      <div class="namoz-ck${stat?" "+stat:""}" onclick="toggleNamoz('${n}')">${icon}</div>
+    </div>`;
+  }).join('');
+
+  // Streak
+  document.getElementById('namozStreak').textContent = (namoz_streak||0) + ' kun 🔥';
+
+  // Cycle row
+  const gender = user?.gender;
+  const cycleRowEl = document.getElementById('cycleRow');
+  const cycleBtnEl = document.getElementById('cycleBtn');
+  if(cycleRowEl) cycleRowEl.style.display = gender==='ayol'?'':'none';
+  if(cycleBtnEl) {
+    cycleBtnEl.textContent = isCycle ? '🌙 "Bu kunlar" yoqilgan — o\'chirish uchun bosing' : '🌙 Bugun "Bu kunlar"ni yoqish';
+    cycleBtnEl.classList.toggle('on', !!isCycle);
+  }
+
+  // Weekly stats
+  const week = namoz_week || {};
+  const mx = Math.max((week.oqildi||0)+(week.endi||0)+(week.qazo||0), 1);
+  document.getElementById('nb-oq').style.width = ((week.oqildi||0)/mx*100)+'%';
+  document.getElementById('nb-en').style.width = ((week.endi||0)/mx*100)+'%';
+  document.getElementById('nb-qz').style.width = ((week.qazo||0)/mx*100)+'%';
+  document.getElementById('nc-oq').textContent = week.oqildi||0;
+  document.getElementById('nc-en').textContent = week.endi||0;
+  document.getElementById('nc-qz').textContent = week.qazo||0;
+}
+
+// ════════════════════════════════════════════════════════════
+//  PAGE: ORZULAR XARITASI
+// ════════════════════════════════════════════════════════════
+async function loadDreams() {
+  try {
+    const d = await apiGet('/api/dream/list');
+    dreamItems = d.dreams || [];
+    renderDreams();
+    // Statistika
+    const total  = dreamItems.length;
+    const ach    = dreamItems.filter(x=>x.status==='achieved').length;
+    const active = total - ach;
+    const statsEl = document.getElementById('dreamStats');
+    if(total > 0) {
+      statsEl.style.display = '';
+      document.getElementById('dsTotalEl').textContent  = total;
+      document.getElementById('dsAchEl').textContent    = ach;
+      document.getElementById('dsActiveEl').textContent = active;
+    } else {
+      statsEl.style.display = 'none';
+    }
+  } catch(e) { toast('❌ Orzularni yuklab bo\'lmadi'); }
+}
+
+function renderDreams() {
+  const el = document.getElementById('dreamGrid');
+  let items = dreamFilter==='all' ? dreamItems : dreamItems.filter(d=>d.category===dreamFilter);
+  if(!items.length) {
+    el.innerHTML = '<div style="grid-column:1/-1"><div class="empty"><div class="empty-icon">✨</div><div class="empty-txt">Hali orzu yo\'q<br>Birinchi orzuingizni qo\'shing!</div></div></div>';
+    return;
+  }
+  // Sort: active first, then achieved
+  items = [...items].sort((a,b) => {
+    if(a.status==='active' && b.status!=='active') return -1;
+    if(b.status==='active' && a.status!=='active') return 1;
+    return b.id - a.id;
+  });
+  el.innerHTML = items.map(d => {
+    const achieved = d.status==='achieved';
+    const catNames = {martaba:'💼 Martaba',oila:'🏠 Oila',salomatlik:'💚 Salomatlik',diin:'🕌 Diin',moliya:'💰 Moliya',sayohat:'✈️ Sayohat',shaxsiy:'✨ Shaxsiy'};
+    const catLabel = catNames[d.category] || d.category;
+    return `<div class="dream-card${achieved?" achieved":""}" onclick="openDreamDetail(${d.id})">
+      <div class="dream-emoji">${d.emoji||"⭐"}</div>
+      <div class="dream-cat">${catLabel}</div>
+      <div class="dream-title">${escHtml(d.title)}</div>
+      <div class="dream-status ${achieved?"achieved":"active"}">
+        ${achieved?"✓ Amalga oshdi":"● Orzu"}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+
+function filterDreams(cat, el) {
+  dreamFilter = cat;
+  document.querySelectorAll('#dreamCats .cat-chip').forEach(c=>c.classList.remove('on'));
+  if(el) el.classList.add('on');
+  renderDreams();
+}
+
+function openDreamDetail(id) {
+  const d = dreamItems.find(x=>x.id===id);
+  if(!d) return;
+  const achieved = d.status==='achieved';
+  const catNames = {martaba:'💼 Martaba',oila:'🏠 Oila',salomatlik:'💚 Salomatlik',diin:'🕌 Diin',moliya:'💰 Moliya',sayohat:'✈️ Sayohat',shaxsiy:'✨ Shaxsiy'};
+  document.getElementById('dreamDetailContent').innerHTML = `
+    <div class="dream-detail-header">
+      <div class="dream-detail-emoji">${d.emoji||"⭐"}</div>
+      <div class="dream-detail-cat">${catNames[d.category]||d.category}</div>
+      <div class="dream-detail-title">${escHtml(d.title)}</div>
+      <div class="dream-detail-status ${achieved?"achieved":"active"}">
+        ${achieved?"✓ Amalga oshdi":"● Faol orzu"}
+      </div>
+    </div>
+    ${d.description?`<p style="font-size:13px;color:var(--t2);line-height:1.6;margin-bottom:16px;text-align:center">${escHtml(d.description)}</p>`:""}
+    <button class="dream-detail-btn ${achieved?"unachieve":"achieve"}" onclick="achieveDream(${d.id})">
+      ${achieved?"↩ Faol qilish":"✅ Amalga oshdi!"}
+    </button>
+    <button class="dream-detail-btn del" onclick="deleteDream(${d.id})">🗑 O'chirish</button>
+  `;
+  openOv('ov-dream-detail');
+}
+
+async function achieveDream(id) {
+  try {
+    await apiPost('/api/dream/achieve', {id});
+    await loadDreams();
+    closeOv('ov-dream-detail');
+    toast('🌟 Ajoyib! Orzuingiz amalga oshdi!');
+  } catch(e) { toast('❌ '+e.message); }
+}
+
+async function deleteDream(id) {
+  try {
+    await apiPost('/api/dream/delete', {id});
+    await loadDreams();
+    closeOv('ov-dream-detail');
+    toast('🗑 O\'chirildi');
+  } catch(e) { toast('❌ '+e.message); }
+}
+
+async function saveDream() {
+  const title = (document.getElementById('drTitle').value||'').trim();
+  if(!title) { toast('❌ Nom kiriting!'); return; }
+  const emoji    = getChip('drEmoji') || '⭐';
+  const category = getChip('drCat')   || 'shaxsiy';
+  const desc     = (document.getElementById('drDesc').value||'').trim();
+  try {
+    await apiPost('/api/dream/add', {title, emoji, category, description:desc});
+    await loadDreams();
+    closeModal('m-dream');
+    document.getElementById('drTitle').value = '';
+    document.getElementById('drDesc').value  = '';
+    toast('✨ Orzu qo\'shildi!');
+  } catch(e) { toast('❌ '+e.message); }
+}
+
+async function toggleTask(id) {
+  try { await apiPost('/api/task/toggle',{id}); await refresh(); }
+  catch(e) { toast('❌ '+e.message); }
+}
+async function saveTask() {
+  const name=(document.getElementById('taskName').value||'').trim();
+  if(!name){toast('❌ Nom kiriting!');return;}
+  const time=document.getElementById('taskTime').value||'';
+  const category=getChip('taskCat')||'umumiy';
+  const priority=getChip('taskPrio')||'oddiy';
+  try{await apiPost('/api/task/add',{task_name:name,task_time:time,category,priority});
+    await refresh();closeModal('m-task');document.getElementById('taskName').value='';
+    toast('✅ Reja qo\'shildi!');}catch(e){toast('❌ '+e.message);}
+}
+async function saveWTask() {
+  const name=(document.getElementById('wtaskName').value||'').trim();
+  if(!name){toast('❌ Nom kiriting!');return;}
+  const time=document.getElementById('wtaskTime').value||'';
+  const category=getChip('wtaskCat')||'umumiy';
+  try{await apiPost('/api/wtask/add',{task_name:name,task_time:time,category});
+    await refresh();closeModal('m-wtask');document.getElementById('wtaskName').value='';
+    toast('✅ Haftalik reja qo\'shildi!');}catch(e){toast('❌ '+e.message);}
+}
+async function toggleHabit(id) {
+  try{await apiPost('/api/habit/toggle',{id});await refresh();}
+  catch(e){toast('❌ '+e.message);}
+}
+async function saveHabit() {
+  const name=(document.getElementById('habitName').value||'').trim();
+  if(!name){toast('❌ Nom kiriting!');return;}
+  const emoji=getChip('habitEmoji')||'🎯';
+  try{await apiPost('/api/habit/add',{name,emoji});await refresh();
+    closeModal('m-habit');document.getElementById('habitName').value='';
+    toast('✅ Odat qo\'shildi!');}catch(e){toast('❌ '+e.message);}
+}
+function pickNamoz(key) {
+  document.getElementById('pickNamozKey').value=key;
+  const names={bomdod:'Bomdod ☁️',peshin:'Peshin 🌞',asr:'Asr 🌤',shom:'Shom 🌆',xufton:'Xufton 🌃'};
+  document.getElementById('pickNamozTitle').textContent=names[key]||key;
+  openModal('m-picknamoz');
+}
+async function toggleNamoz(key, holat) {
+  try{await apiPost('/api/namoz/mark',{key,holat});await refresh();closeModal('m-picknamoz');}
+  catch(e){toast('❌ '+e.message);}
+}
+async function toggleCycle() {
+  try{const r=await apiPost('/api/cycle/toggle',{});await refresh();renderNamoz();renderSettings();
+    toast(r.cycle_today?'🌙 "Bu kunlar" yoqildi':'✅ "Bu kunlar" o\'chirildi');}
+  catch(e){toast('❌ '+e.message);}
+}
+async function saveNamozTimes() {
+  const times={};
+  ['bomdod','peshin','asr','shom','xufton'].forEach(k=>{
+    const v=(document.getElementById('nt_'+k)||{}).value;if(v)times[k]=v;
+  });
+  try{await apiPost('/api/namoz/times',times);await refresh();closeModal('m-namoz');
+    toast('✅ Saqlandi!');}catch(e){toast('❌ '+e.message);}
+}
+async function clickZikr(id, amount) {
+  try{await apiPost('/api/zikr/click',{id,amount});await refresh();renderZikrs();}
+  catch(e){toast('❌ '+e.message);}
+}
+async function saveZikr() {
+  const name=(document.getElementById('zikrName').value||'').trim();
+  if(!name){toast('❌ Nom kiriting!');return;}
+  const emoji=getChip('zikrEmoji')||'📿';
+  const target=parseInt(getChip('zikrTarget')||'33');
+  try{await apiPost('/api/zikr/add',{name,emoji,target});await refresh();
+    closeModal('m-zikr');document.getElementById('zikrName').value='';
+    toast('✅ Zikr qo\'shildi!');}catch(e){toast('❌ '+e.message);}
+}
+async function saveGoal() {
+  const title=(document.getElementById('goalTitle').value||'').trim();
+  const reward=(document.getElementById('goalReward').value||'').trim();
+  if(!title||!reward){toast('❌ Barcha maydonlarni to\'ldiring!');return;}
+  const days=parseInt(document.getElementById('goalDays').value||'30');
+  const ballReward=parseInt(document.getElementById('goalBall').value||'100');
+  try{await apiPost('/api/goal/add',{title,reward,days,ball_reward:ballReward});await refresh();
+    closeModal('m-goal');['goalTitle','goalReward'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+    toast('✅ Maqsad qo\'shildi!');}catch(e){toast('❌ '+e.message);}
+}
+async function completeGoal(id) {
+  try{await apiPost('/api/goal/complete',{id});await refresh();toast('🎉 Maqsad bajarildi!');}
+  catch(e){toast('❌ '+e.message);}
+}
+async function saveReward() {
+  const title=(document.getElementById('rewardTitle').value||'').trim();
+  const ballCost=parseInt(document.getElementById('rewardCost').value||'50');
+  if(!title){toast('❌ Nom kiriting!');return;}
+  try{await apiPost('/api/reward/add',{title,ball_cost:ballCost});await refresh();
+    closeModal('m-reward');document.getElementById('rewardTitle').value='';
+    toast('✅ Mukofot qo\'shildi!');}catch(e){toast('❌ '+e.message);}
+}
+async function buyReward(id) {
+  try{await apiPost('/api/reward/buy',{id});await refresh();toast('🎁 Mukofot olindi!');}
+  catch(e){toast('❌ '+e.message);}
+}
+async function joinChallenge(id) {
+  try{await apiPost('/api/challenge/join',{id});await refresh();loadChallenges();toast('🏁 Qo\'shildingiz!');}
+  catch(e){toast(e.message==='already_joined'?'ℹ️ Allaqachon qo\'shilgansiz':'❌ '+e.message);}
+}
+async function saveGender(val) {
+  try{await apiPost('/api/settings',{gender:val});await refresh();renderSettings();toast('✅ Saqlandi!');}
+  catch(e){toast('❌ '+e.message);}
+}
+async function toggleTheme() {
+  const cur=S?.user?.theme||'dark', next=cur==='dark'?'light':'dark';
+  applyTheme(next);
+  try{await apiPost('/api/settings',{theme:next});await refresh();}
+  catch(e){toast('❌ '+e.message);}
+}
+async function saveDayEnd() {
+  const val=(document.getElementById('dayEndInput')||{}).value;
+  if(!val) return;
+  const [h,m]=val.split(':').map(Number);
+  if(h>23||m>59||isNaN(h)||isNaN(m)){toast('❌ Noto\'g\'ri vaqt');return;}
+  try{await apiPost('/api/settings',{day_end_time:val});toast('✅ Saqlandi!');await refresh();}
+  catch(e){toast('❌ '+e.message);}
+}
+
+
+
+function renderGoals() {
+  if(!S) return;
+  const el = document.getElementById('goalList');
+  const goals = S.goals || [];
+  if(!goals.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">🏆</div><div class="empty-txt">Hali maqsad yo\'q<br>Qo\'shing va kuzating</div></div>';
+    return;
+  }
+  el.innerHTML = goals.map(g => {
+    const done = g.status==='done';
+    const days = g.deadline ? Math.max(0,Math.round((new Date(g.deadline)-new Date())/86400000)) : null;
+    return `<div class="goal-item">
+      <div class="goal-head">
+        <div class="goal-title">${escHtml(g.title)}</div>
+        <span class="goal-badge ${done?"done":"active"}">${done?"✓ Bajarildi":"Faol"}</span>
+      </div>
+      <div class="goal-meta">${g.deadline?`📅 ${g.deadline}${days!=null?" · "+days+" kun qoldi":""}`:""}</div>
+      <div class="goal-reward-txt">🎁 ${escHtml(g.reward||"")}</div>
+      ${!done?`<button class="modal-btn" style="padding:9px;font-size:12px;margin-top:4px" onclick="completeGoal(${g.id})">✅ Bajarildi</button>`:""}
+    </div>`;
+  }).join('');
+}
+
+function renderRewards() {
+  if(!S) return;
+  const el = document.getElementById('rewardList');
+  const rewards = S.rewards || [];
+  if(!rewards.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">🎁</div><div class="empty-txt">Mukofot yo\'q</div></div>';
+    return;
+  }
+  el.innerHTML = rewards.map(r => `
+    <div class="goal-item">
+      <div class="goal-head">
+        <div class="goal-title">${escHtml(r.title)}</div>
+        <span class="goal-badge active">💰 ${r.ball_cost} ball</span>
+      </div>
+      <button class="modal-btn" style="padding:9px;font-size:12px;margin-top:6px" onclick="buyReward(${r.id})">🛍 Sotib olish</button>
+    </div>`).join('');
+}
+
+
+async function loadChallenges() {
+  try {
+    const d = await apiGet('/api/challenge/list');
+    const active = new Set((S.active_challenges||[]).map(c=>c.challenge_id||c.id));
+    const el = document.getElementById('challengeList');
+    el.innerHTML = (d.challenges||[]).map(c => `
+      <div class="ch-card">
+        <div class="ch-head">
+          <div class="ch-emoji">${c.emoji||"🏁"}</div>
+          <div>
+            <div class="ch-title">${escHtml(c.title)}</div>
+            <div class="ch-desc">${escHtml(c.description||"")}</div>
+          </div>
+        </div>
+        <div class="ch-meta">
+          <span>📅 ${c.duration_days} kun</span>
+          <span>💰 +${c.ball_reward} ball</span>
+        </div>
+        <button class="ch-join ${active.has(c.id)?"joined":"join"}" onclick="joinChallenge(${c.id})">
+          ${active.has(c.id)?"✓ Qo'shilgan":"+ Qo'shilish"}
+        </button>
+      </div>`).join('');
+  } catch(e) { console.error(e); }
+}
+
+
+
+// ═══════════════════════════════════════════════
+// APP INIT
+// ═══════════════════════════════════════════════
+
+
+function initTg() {
+  if(!tg) return;
+  try {
+    tg.ready();
+    tg.expand();
+    initData = tg.initData || '';
+    applyTheme(tg.colorScheme==='light'?'light':'dark');
+  } catch(e) { console.warn('Telegram WebApp init:', e); }
+}
+
+
+
+async function init() {
+  const loadEl = document.getElementById('ovLoad');
+  const errorEl = document.getElementById('ovErr');
+  const errTxt  = document.getElementById('ovErrTxt');
+  initTg();
+  // 15 soniya timeout — agar server javob bermasa xato ko'rsatamiz
+  const timeout = setTimeout(() => {
+    if(loadEl) loadEl.classList.add('hidden');
+    if(errorEl) errorEl.classList.remove('hidden');
+    if(errTxt) errTxt.textContent = 'Server javob bermadi (15s). Qayta urining.';
+  }, 15000);
+  try {
+    await loadData();
+    clearTimeout(timeout);
+    renderAll();
+    if(loadEl) loadEl.classList.add('hidden');
+  } catch(e) {
+    clearTimeout(timeout);
+    console.error('Init error:', e);
+    if(loadEl) loadEl.classList.add('hidden');
+    if(errorEl) errorEl.classList.remove('hidden');
+    if(errTxt) {
+      errTxt.textContent = !initData
+        ? 'Ilovani Telegram orqali oching.'
+        : 'Xatolik: ' + (e.message || 'Serverga ulanib bo\'lmadi');
+    }
+  }
+}
+
+
+
+init();
+
+</script>
+</body>
+</html>
