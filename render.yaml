@@ -12,6 +12,11 @@ services:
         sync: false
       - key: MINI_APP_URL
         sync: false
+      # Webhook rejimini yoqish uchun (tavsiya etiladi, always-on):
+      # to'liq URL kiriting, masalan: https://sizning-app.onrender.com
+      # Qolsa, bot avtomatik polling rejimida ishlaydi.
+      - key: WEBHOOK_URL
+        sync: false
       - key: KANAL_ID
         value: "@shaxsiy_nazoratchi"
       - key: KANAL_LINKI
@@ -22,3 +27,15 @@ services:
       name: bot-db
       mountPath: /var/data
       sizeGB: 1
+
+# ⚠️ MUHIM Eslatma:
+# Render'ning BEPUL (Free) Web Service'lariga doimiy disk (persistent disk)
+# ulanmaydi — disk faqat pullik (Starter va undan yuqori) instance'larga beriladi.
+# Shuning uchun:
+#   - Pullik tarifda: DB_PATH=/var/data/bot_data.db (disk mount) — ma'lumot saqlanadi.
+#   - Bepul tarifda: disk mount bo'lmasa, bot to'g'ridan-to'g'ri joriy katalogga
+#     "bot_data.db" yozadi (kod avtomatik tushadi). Ammo har bir restart/deployda
+#     baza tozalanadi — ma'lumotlar o'chib ketadi.
+#   - Bepul tarifda bot "uxlab qolmasligi" uchun WEBHOOK_URL o'rnatib webhook
+#     rejimidan foydalaning (webhook trafik serverni uyg'oq tutadi), yoki tashqi
+#     uptime monitor orqali /health ni har 10-15 daqiqada chaqirtiring.

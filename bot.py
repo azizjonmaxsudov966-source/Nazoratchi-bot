@@ -38,6 +38,23 @@ KANAL_ID     = os.environ.get('KANAL_ID', '@shaxsiy_nazoratchi')
 KANAL_LINKI  = os.environ.get('KANAL_LINKI', 'https://t.me/shaxsiy_nazoratchi')
 DB_PATH      = os.environ.get('DB_PATH', 'bot_data.db')
 MINI_APP_URL = os.environ.get('MINI_APP_URL', '')
+WEBHOOK_URL  = os.environ.get('WEBHOOK_URL', '')
+WEBHOOK_SECRET = os.environ.get('WEBHOOK_SECRET', '')
+
+# ⚙️ DB_PATH disk mount bo'lmaganda ham ishlashi uchun:
+# Render bepul tarifida /var/data mount bo'lmasa, mavjud kataloqqa tushamiz.
+if DB_PATH:
+    try:
+        _db_dir = os.path.dirname(os.path.abspath(DB_PATH))
+        _write_test = os.path.join(_db_dir, '.wtest')
+        with open(_write_test, 'w') as _f:
+            _f.write('1')
+        os.remove(_write_test)
+    except Exception:
+        # Belgilangan yo'l yozib bo'lmaydigan bo'lsa — joriy katalogdan foydalanamiz.
+        import warnings
+        warnings.warn(f"DB_PATH ({DB_PATH}) yozib bo'lmaydi — bot_data.db ga tushilmoqda")
+        DB_PATH = 'bot_data.db'
 
 if not API_TOKEN:
     raise RuntimeError(
@@ -308,10 +325,30 @@ def keyingi_unvon(ball):
 # 💾 MA'LUMOTLAR BAZASI
 # -----------------------------------------------------------------------
 
+import sqlite3 as _sqlite3
+
+# 🔒 SQLite uchun mustahkam sozlash — thread'lar orasida ko'plab ulanishlar
+# bo'lsa ham "database is locked" xatolarini minimallashtiradi.
 def get_conn():
-    conn = sqlite3.connect(DB_PATH, check_same_thread=False, timeout=15)
+    """Har chaqiruvda yangi, to'g'ri sozlangan ulanish ochadi (thread-safe)."""
+    if not DB_PATH:
+        raise RuntimeError("DB_PATH aniqlanmagan!")
+    # DB katalogi mavjudligini ta'minlash (disk mount bo'lmasa ham ishlaydi).
+    _dir = os.path.dirname(os.path.abspath(DB_PATH))
+    try:
+        if not os.path.isdir(_dir):
+            os.makedirs(_dir, exist_ok=True)
+    except Exception:
+        pass
+    conn = _sqlite3.connect(DB_PATH, check_same_thread=False, timeout=30)
+    # WAL rejimi: o'qish va yozish bir vaqtda bloklanmaydi — thread'lar uchun
+    # eng yaxshi tanlov. busy_timeout esa lock to'qnashuvida kutib qayta
+    # urinishni ta'minlaydi ("database is locked" xatosini kamaytiradi).
     conn.execute("PRAGMA journal_mode=WAL")
-    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA synchronous=NORMAL")
+    conn.execute("PRAGMA busy_timeout=30000")
+    conn.execute("PRAGMA foreign_keys=ON")
+    conn.row_factory = _sqlite3.Row
     return conn
 
 def init_db():
@@ -3179,218 +3216,252 @@ def cb_task_answer(call):
 # -----------------------------------------------------------------------
 
 def schedule_checker():
-    last_minute = ""
+    """Scheduler — har bir daqiqani ishonchli qayta ishlaydi.
+
+    Render bepul tarifida server 15 daqiqa "uxlab qolishi" mumkin. Agar
+    bitta yoki bir nechta daqiqa o'tkazib yuborilgan bo'lsa, pastdagi loop
+    so'nggi ishlangan daqiqadan to hozirgacha olib boradi va har bir daqiqani
+    qayta ishlaydi. Shu bilan eslatma/hisobot/testni o'tkazib yuborilmaydi.
+    """
+    last_ts = None
     while True:
         conn = None
         try:
-            now = uz_time(); current_time = now.strftime("%H:%M")
-            if current_time == last_minute:
-                time.sleep(5); continue
-            last_minute = current_time
-            conn = get_conn()
+            now = uz_time()
+            current_min = datetime(now.year, now.month, now.day, now.hour, now.minute, 0)
 
-            # 1. NAMOZ ESLATMALARI
-            namoz_rows = conn.execute("SELECT user_id,bomdod,peshin,asr,shom,xufton,saved_at FROM namoz_times").fetchall()
-            for nrow in namoz_rows:
-                uid = nrow['user_id']
-                saved = datetime.strptime(nrow['saved_at'], "%Y-%m-%d")
-                if (now.date() - saved.date()).days >= 7:
-                    try:
-                        bot.send_message(uid, "⚠️ *Namoz vaqtlaringiz muddati tugadi!*\nYangilang: *⏰ Namoz vaqtlarini kiritish*", parse_mode="Markdown")
-                    except Exception as e:
-                        log.debug("Xatolik (e'tiborga olinmadi): %s", e)
-                    conn.execute("DELETE FROM namoz_times WHERE user_id=?", (uid,))
-                    conn.commit(); continue
-                NAMOZ_MAP = {'Bomdod ☁️':nrow['bomdod'],'Peshin 🌞':nrow['peshin'],'Asr 🌤':nrow['asr'],'Shom 🌆':nrow['shom'],'Xufton 🌃':nrow['xufton']}
-                if is_cycle_day(conn, uid, today_str()):
-                    continue  # 🌙 Bu kunlar — namoz eslatmalari yuborilmaydi
-                for nom, vaqt in NAMOZ_MAP.items():
-                    if vaqt == current_time:
-                        try:
-                            bot.send_message(uid, f"🕌 *Namoz vaqti: {nom}*\n⏰ {vaqt}", parse_mode="Markdown")
-                            conn.execute("INSERT INTO namoz_notify (user_id,namoz_nomi,notified_at) VALUES (?,?,?)", (uid, nom, time.time()))
-                            conn.commit()
-                        except Exception as e:
-                            log.debug("Xatolik (e'tiborga olinmadi): %s", e)
+            # Qaysi daqiqadan boshlashni aniqlaymiz. Agar bo'shliq bo'lsa, har
+            # bir o'tkazib yuborilgan daqiqani ketma-ket ishlaymiz (10
+            # daqiqadan ko'p orqada qolsak, oxirgi 10 daqiqani ishlaymiz).
+            if last_ts is None:
+                start = current_min
+            else:
+                start = last_ts + timedelta(minutes=1)
+                # Juda uzoq "uxlash" bo'lsa, hammasini ketma-ket yuborishdan
+                # qochamiz — oxirgi 10 daqiqani ishlaymiz, qolganlari tashlab.
+                if current_min - start > timedelta(minutes=10):
+                    start = current_min - timedelta(minutes=10)
+                # Hozirgi daqiqa allaqachon ishlangan bo'lsa (hali shu daqiqa
+                # ichidamiz), qayta ishlamaymiz - keyingi real daqiqani kutamiz.
+                if start > current_min:
+                    time.sleep(5)
+                    continue
 
-            # 2. NAMOZ 20 DAQIQA TEKSHIRUVI
-            notify_rows = conn.execute("SELECT id,user_id,namoz_nomi FROM namoz_notify WHERE asked=0 AND notified_at<?", (time.time()-20*60,)).fetchall()
-            for nr in notify_rows:
-                uid = nr['user_id']; nom = nr['namoz_nomi']
-                if is_cycle_day(conn, uid, today_str()):
-                    conn.execute("UPDATE namoz_notify SET asked=1 WHERE id=?", (nr['id'],))
-                    conn.commit(); continue
-                nom_key = nom.replace(" ", "__")
+            minute_it = start
+            while minute_it <= current_min:
+                now_run = minute_it
+                current_time = now_run.strftime("%H:%M")
+                conn = get_conn()
                 try:
-                    markup = types.InlineKeyboardMarkup()
-                    markup.row(
-                        types.InlineKeyboardButton("✅ Ha, o'qidim", callback_data=f"namoz_oqildi_{uid}_{nom_key}"),
-                        types.InlineKeyboardButton("⏳ Endi o'qiyman", callback_data=f"namoz_endi_oqiyman_{uid}_{nom_key}"))
-                    markup.row(types.InlineKeyboardButton("🔄 Qazo o'qiyman", callback_data=f"namoz_qazo_{uid}_{nom_key}"))
-                    bot.send_message(uid, f"🕌 *{nom}* namozini o'qidingizmi?", reply_markup=markup, parse_mode="Markdown")
-                    conn.execute("UPDATE namoz_notify SET asked=1 WHERE id=?", (nr['id'],))
-                    conn.commit()
-                except Exception as e:
-                    log.debug("Xatolik (e'tiborga olinmadi): %s", e)
-
-            # 3. KUNLIK REJA ESLATMALARI
-            daily_remind = conn.execute(
-                "SELECT id,user_id,task_name,priority FROM daily_tasks WHERE sana=? AND task_time=? AND notified=0",
-                (today_str(), current_time)).fetchall()
-            for dr in daily_remind:
-                pri_icon = {"shoshilinch":"🔴","orta":"🟡","oddiy":"🟢"}.get(dr['priority'],"🟢")
-                try:
-                    bot.send_message(dr['user_id'],
-                        f"🔔 *Eslatma!* {pri_icon}\n📌 {dr['task_name']} vaqti bo'ldi!",
-                        parse_mode="Markdown")
-                    conn.execute("UPDATE daily_tasks SET notified=1, notified_at=? WHERE id=?", (time.time(), dr['id']))
-                    conn.commit()
-                except Exception as e:
-                    log.debug("Xatolik (e'tiborga olinmadi): %s", e)
-
-            # 4. HAFTALIK REJA ESLATMALARI
-            weekly_rows = conn.execute("SELECT user_id,task_name,task_time FROM weekly_tasks WHERE active=1 AND task_time=?", (current_time,)).fetchall()
-            for wr in weekly_rows:
-                uid = wr['user_id']
-                existing = conn.execute("SELECT id FROM daily_tasks WHERE user_id=? AND task_name=? AND sana=? AND source='weekly'", (uid, wr['task_name'], today_str())).fetchone()
-                if not existing:
-                    conn.execute("INSERT INTO daily_tasks (user_id,task_name,task_time,sana,source,notified,notified_at) VALUES (?,?,?,?,'weekly',1,?)", (uid, wr['task_name'], wr['task_time'], today_str(), time.time()))
-                    conn.commit()
-                try: bot.send_message(uid, f"📅 *Haftalik reja:*\n📌 {wr['task_name']}", parse_mode="Markdown")
-                except Exception as e:
-                    log.debug("Xatolik (e'tiborga olinmadi): %s", e)
-
-            # 5. 45 DAQIQA TEKSHIRUVI
-            check_45 = conn.execute(
-                "SELECT id,user_id,task_name FROM daily_tasks WHERE sana=? AND notified=1 AND verified=0 AND status IS NULL AND notified_at<?",
-                (today_str(), time.time()-45*60)).fetchall()
-            for cr in check_45:
-                try:
-                    markup = types.InlineKeyboardMarkup()
-                    markup.row(
-                        types.InlineKeyboardButton("✅ Ha, bajardim", callback_data=f"done_{cr['user_id']}_{cr['id']}"),
-                        types.InlineKeyboardButton("❌ Yo'q", callback_data=f"not_{cr['user_id']}_{cr['id']}"))
-                    bot.send_message(cr['user_id'],
-                        f"❓ 45 daqiqa o'tdi.\n*'{cr['task_name']}'* bajarildimi?\n\n"
-                        f"⚠️ *Yo'q* deb javob bersangiz -5 ball jarima!",
-                        reply_markup=markup, parse_mode="Markdown")
-                    conn.execute("UPDATE daily_tasks SET verified=1 WHERE id=?", (cr['id'],))
-                    conn.commit()
-                except Exception as e:
-                    log.debug("Xatolik (e'tiborga olinmadi): %s", e)
-
-            # 6. ZIKR ESLATMALARI
-            zikr_reminders = conn.execute(
-                "SELECT DISTINCT z.user_id, z.name, z.emoji FROM zikrs z WHERE z.active=1 AND z.reminder_time=? AND z.reminder_time != ''",
-                (current_time,)).fetchall()
-            for zr in zikr_reminders:
-                try:
-                    bot.send_message(zr['user_id'],
-                        f"📿 *Zikr vaqti!*\n{zr['emoji']} *{zr['name']}* aytish vaqti!\n\n_📿 Zikr → ✅ Zikr sanash_",
-                        parse_mode="Markdown")
-                except Exception as e:
-                    log.debug("Xatolik (e'tiborga olinmadi): %s", e)
-
-            # 7. CHALLENGE TEKSHIRUVI
-            expired_challenges = conn.execute(
-                "SELECT uc.id, uc.user_id, c.title, c.emoji, c.ball_reward, uc.start_date, uc.end_date "
-                "FROM user_challenges uc JOIN challenges c ON uc.challenge_id=c.id "
-                "WHERE uc.status='active' AND uc.end_date<?",
-                (today_str(),)).fetchall()
-            for ch in expired_challenges:
-                uid = ch['user_id']
-                # Challenge tugadi — natijani tekshirish
-                start = ch['start_date']; end = ch['end_date']
-                task_rows = conn.execute(
-                    "SELECT COUNT(*) as j, SUM(CASE WHEN status=1 THEN 1 ELSE 0 END) as b FROM daily_tasks WHERE user_id=? AND sana>=? AND sana<=?",
-                    (uid, start, end)).fetchone()
-                j = task_rows['j'] or 0; b = task_rows['b'] or 0
-                foiz = int(b/j*100) if j else 0
-                if foiz >= 70:  # 70% bajarildi = challenge muvaffaqiyatli
-                    conn.execute("UPDATE user_challenges SET status='completed' WHERE id=?", (ch['id'],))
-                    add_ball_conn(conn, uid, ch['ball_reward'])
-                    conn.commit()
-                    try:
-                        bot.send_message(uid,
-                            f"🎉 *CHALLENGE YAKUNLANDI!*\n\n"
-                            f"{ch['emoji']} *{ch['title']}*\n"
-                            f"📊 Natija: {b}/{j} ({foiz}%)\n"
-                            f"💰 *+{ch['ball_reward']} ball qo'shildi!*",
-                            parse_mode="Markdown")
-                    except Exception as e:
-                        log.debug("Xatolik (e'tiborga olinmadi): %s", e)
-                else:
-                    conn.execute("UPDATE user_challenges SET status='failed' WHERE id=?", (ch['id'],))
-                    conn.commit()
-                    try:
-                        bot.send_message(uid,
-                            f"😔 *Challenge tugadi*\n\n"
-                            f"{ch['emoji']} *{ch['title']}*\n"
-                            f"📊 Natija: {b}/{j} ({foiz}%)\n"
-                            f"_(Muvaffaqiyat uchun 70% kerak edi)_\n\n"
-                            f"💪 Qaytadan boshlashingiz mumkin!",
-                            parse_mode="Markdown")
-                    except Exception as e:
-                        log.debug("Xatolik (e'tiborga olinmadi): %s", e)
-
-            # 8. AVTOMATIK HISOBOTLAR — har bir foydalanuvchi o'zi belgilagan
-            # "kun yakuni" vaqtiga ko'ra (sozlamada o'zgartirilishi mumkin)
-            all_users = conn.execute("SELECT user_id, day_end_time FROM users WHERE registered=1").fetchall()
-
-            for u in all_users:
-                day_end = u['day_end_time'] or '22:00'
-
-                # Kechki AI hisobot — foydalanuvchining kun yakuni vaqtida
-                if current_time == day_end:
-                    try:
-                        report = generate_ai_report(u['user_id'])
-                        bot.send_message(u['user_id'], report, parse_mode="Markdown")
-                    except Exception as e:
-                        log.debug("Xatolik (e'tiborga olinmadi): %s", e)
-
-                    # Haftalik hisobot — yakshanba kuni, xuddi shu vaqtda
-                    if now.weekday() == 6:
-                        try: send_weekly_report(u['user_id'])
-                        except Exception as e:
-                            log.debug("Xatolik (e'tiborga olinmadi): %s", e)
-
-                    # Oylik hisobot — oyning oxirgi kuni, xuddi shu vaqtda
-                    tomorrow = now + timedelta(days=1)
-                    if tomorrow.month != now.month:
-                        try: send_monthly_report(u['user_id'])
-                        except Exception as e:
-                            log.debug("Xatolik (e'tiborga olinmadi): %s", e)
-
-                # 9. JARIMA TIZIMI — kun yakunidan 1.5 soat o'tib, bajarilmagan
-                # rejalar uchun ball jarimasi (har bir foydalanuvchi uchun shaxsiy vaqtda)
-                if current_time == hhmm_plus(day_end, 90):
-                    uid = u['user_id']
-                    row = conn.execute(
-                        "SELECT COUNT(*) as cnt FROM daily_tasks "
-                        "WHERE user_id=? AND sana=? AND status IS NULL AND notified=1",
-                        (uid, today_str())).fetchone()
-                    cnt = row['cnt'] or 0
-                    if cnt > 0:
-                        penalty = min(cnt * 5, 50)  # Max 50 ball jarima
-                        add_ball_conn(conn, uid, -penalty)
-                        conn.commit()
-                        try:
-                            bot.send_message(uid,
-                                f"⚠️ *JARIMA TIZIMI*\n\n"
-                                f"❌ Bugun {cnt} ta reja bajarilmadi\n"
-                                f"💰 -{penalty} ball jarima qo'llanildi\n\n"
-                                f"_Ertaga barcha rejalarni bajaring!_",
-                                parse_mode="Markdown")
-                        except Exception as e:
-                            log.debug("Xatolik (e'tiborga olinmadi): %s", e)
+                    _run_scheduler_minute(now_run, current_time, conn)
+                finally:
+                    conn.close()
+                last_ts = minute_it
+                minute_it += timedelta(minutes=1)
 
             time.sleep(5)
         except Exception as e:
             log.exception("[TAYMER] kutilmagan xatolik")
             time.sleep(10)
-        finally:
-            if conn:
-                conn.close()
+
+
+def _run_scheduler_minute(now, current_time, conn):
+    """Bitta daqiqadagi barcha vazifalarni bajaradi (scheduler ichki qismi)."""
+    # 1. NAMOZ ESLATMALARI
+    namoz_rows = conn.execute("SELECT user_id,bomdod,peshin,asr,shom,xufton,saved_at FROM namoz_times").fetchall()
+    for nrow in namoz_rows:
+        uid = nrow['user_id']
+        saved = datetime.strptime(nrow['saved_at'], "%Y-%m-%d")
+        if (now.date() - saved.date()).days >= 7:
+            try:
+                bot.send_message(uid, "⚠️ *Namoz vaqtlaringiz muddati tugadi!*\nYangilang: *⏰ Namoz vaqtlarini kiritish*", parse_mode="Markdown")
+            except Exception as e:
+                log.debug("Xatolik (e'tiborga olinmadi): %s", e)
+            conn.execute("DELETE FROM namoz_times WHERE user_id=?", (uid,))
+            conn.commit(); continue
+        NAMOZ_MAP = {'Bomdod ☁️':nrow['bomdod'],'Peshin 🌞':nrow['peshin'],'Asr 🌤':nrow['asr'],'Shom 🌆':nrow['shom'],'Xufton 🌃':nrow['xufton']}
+        if is_cycle_day(conn, uid, today_str()):
+            continue  # 🌙 Bu kunlar — namoz eslatmalari yuborilmaydi
+        for nom, vaqt in NAMOZ_MAP.items():
+            if vaqt == current_time:
+                try:
+                    bot.send_message(uid, f"🕌 *Namoz vaqti: {nom}*\n⏰ {vaqt}", parse_mode="Markdown")
+                    conn.execute("INSERT INTO namoz_notify (user_id,namoz_nomi,notified_at) VALUES (?,?,?)", (uid, nom, time.time()))
+                    conn.commit()
+                except Exception as e:
+                    log.debug("Xatolik (e'tiborga olinmadi): %s", e)
+
+    # 2. NAMOZ 20 DAQIQA TEKSHIRUVI
+    notify_rows = conn.execute("SELECT id,user_id,namoz_nomi FROM namoz_notify WHERE asked=0 AND notified_at<?", (time.time()-20*60,)).fetchall()
+    for nr in notify_rows:
+        uid = nr['user_id']; nom = nr['namoz_nomi']
+        if is_cycle_day(conn, uid, today_str()):
+            conn.execute("UPDATE namoz_notify SET asked=1 WHERE id=?", (nr['id'],))
+            conn.commit(); continue
+        nom_key = nom.replace(" ", "__")
+        try:
+            markup = types.InlineKeyboardMarkup()
+            markup.row(
+                types.InlineKeyboardButton("✅ Ha, o'qidim", callback_data=f"namoz_oqildi_{uid}_{nom_key}"),
+                types.InlineKeyboardButton("⏳ Endi o'qiyman", callback_data=f"namoz_endi_oqiyman_{uid}_{nom_key}"))
+            markup.row(types.InlineKeyboardButton("🔄 Qazo o'qiyman", callback_data=f"namoz_qazo_{uid}_{nom_key}"))
+            bot.send_message(uid, f"🕌 *{nom}* namozini o'qidingizmi?", reply_markup=markup, parse_mode="Markdown")
+            conn.execute("UPDATE namoz_notify SET asked=1 WHERE id=?", (nr['id'],))
+            conn.commit()
+        except Exception as e:
+            log.debug("Xatolik (e'tiborga olinmadi): %s", e)
+
+    # 3. KUNLIK REJA ESLATMALARI
+    daily_remind = conn.execute(
+        "SELECT id,user_id,task_name,priority FROM daily_tasks WHERE sana=? AND task_time=? AND notified=0",
+        (today_str(), current_time)).fetchall()
+    for dr in daily_remind:
+        pri_icon = {"shoshilinch":"🔴","orta":"🟡","oddiy":"🟢"}.get(dr['priority'],"🟢")
+        try:
+            bot.send_message(dr['user_id'],
+                f"🔔 *Eslatma!* {pri_icon}\n📌 {dr['task_name']} vaqti bo'ldi!",
+                parse_mode="Markdown")
+            conn.execute("UPDATE daily_tasks SET notified=1, notified_at=? WHERE id=?", (time.time(), dr['id']))
+            conn.commit()
+        except Exception as e:
+            log.debug("Xatolik (e'tiborga olinmadi): %s", e)
+
+    # 4. HAFTALIK REJA ESLATMALARI
+    weekly_rows = conn.execute("SELECT user_id,task_name,task_time FROM weekly_tasks WHERE active=1 AND task_time=?", (current_time,)).fetchall()
+    for wr in weekly_rows:
+        uid = wr['user_id']
+        existing = conn.execute("SELECT id FROM daily_tasks WHERE user_id=? AND task_name=? AND sana=? AND source='weekly'", (uid, wr['task_name'], today_str())).fetchone()
+        if not existing:
+            conn.execute("INSERT INTO daily_tasks (user_id,task_name,task_time,sana,source,notified,notified_at) VALUES (?,?,?,?,'weekly',1,?)", (uid, wr['task_name'], wr['task_time'], today_str(), time.time()))
+            conn.commit()
+        try: bot.send_message(uid, f"📅 *Haftalik reja:*\n📌 {wr['task_name']}", parse_mode="Markdown")
+        except Exception as e:
+            log.debug("Xatolik (e'tiborga olinmadi): %s", e)
+
+    # 5. 45 DAQIQA TEKSHIRUVI
+    check_45 = conn.execute(
+        "SELECT id,user_id,task_name FROM daily_tasks WHERE sana=? AND notified=1 AND verified=0 AND status IS NULL AND notified_at<?",
+        (today_str(), time.time()-45*60)).fetchall()
+    for cr in check_45:
+        try:
+            markup = types.InlineKeyboardMarkup()
+            markup.row(
+                types.InlineKeyboardButton("✅ Ha, bajardim", callback_data=f"done_{cr['user_id']}_{cr['id']}"),
+                types.InlineKeyboardButton("❌ Yo'q", callback_data=f"not_{cr['user_id']}_{cr['id']}"))
+            bot.send_message(cr['user_id'],
+                f"❓ 45 daqiqa o'tdi.\n*'{cr['task_name']}'* bajarildimi?\n\n"
+                f"⚠️ *Yo'q* deb javob bersangiz -5 ball jarima!",
+                reply_markup=markup, parse_mode="Markdown")
+            conn.execute("UPDATE daily_tasks SET verified=1 WHERE id=?", (cr['id'],))
+            conn.commit()
+        except Exception as e:
+            log.debug("Xatolik (e'tiborga olinmadi): %s", e)
+
+    # 6. ZIKR ESLATMALARI
+    zikr_reminders = conn.execute(
+        "SELECT DISTINCT z.user_id, z.name, z.emoji FROM zikrs z WHERE z.active=1 AND z.reminder_time=? AND z.reminder_time != ''",
+        (current_time,)).fetchall()
+    for zr in zikr_reminders:
+        try:
+            bot.send_message(zr['user_id'],
+                f"📿 *Zikr vaqti!*\n{zr['emoji']} *{zr['name']}* aytish vaqti!\n\n_📿 Zikr → ✅ Zikr sanash_",
+                parse_mode="Markdown")
+        except Exception as e:
+            log.debug("Xatolik (e'tiborga olinmadi): %s", e)
+
+    # 7. CHALLENGE TEKSHIRUVI
+    expired_challenges = conn.execute(
+        "SELECT uc.id, uc.user_id, c.title, c.emoji, c.ball_reward, uc.start_date, uc.end_date "
+        "FROM user_challenges uc JOIN challenges c ON uc.challenge_id=c.id "
+        "WHERE uc.status='active' AND uc.end_date<?",
+        (today_str(),)).fetchall()
+    for ch in expired_challenges:
+        uid = ch['user_id']
+        # Challenge tugadi — natijani tekshirish
+        start = ch['start_date']; end = ch['end_date']
+        task_rows = conn.execute(
+            "SELECT COUNT(*) as j, SUM(CASE WHEN status=1 THEN 1 ELSE 0 END) as b FROM daily_tasks WHERE user_id=? AND sana>=? AND sana<=?",
+            (uid, start, end)).fetchone()
+        j = task_rows['j'] or 0; b = task_rows['b'] or 0
+        foiz = int(b/j*100) if j else 0
+        if foiz >= 70:  # 70% bajarildi = challenge muvaffaqiyatli
+            conn.execute("UPDATE user_challenges SET status='completed' WHERE id=?", (ch['id'],))
+            add_ball_conn(conn, uid, ch['ball_reward'])
+            conn.commit()
+            try:
+                bot.send_message(uid,
+                    f"🎉 *CHALLENGE YAKUNLANDI!*\n\n"
+                    f"{ch['emoji']} *{ch['title']}*\n"
+                    f"📊 Natija: {b}/{j} ({foiz}%)\n"
+                    f"💰 *+{ch['ball_reward']} ball qo'shildi!*",
+                    parse_mode="Markdown")
+            except Exception as e:
+                log.debug("Xatolik (e'tiborga olinmadi): %s", e)
+        else:
+            conn.execute("UPDATE user_challenges SET status='failed' WHERE id=?", (ch['id'],))
+            conn.commit()
+            try:
+                bot.send_message(uid,
+                    f"😔 *Challenge tugadi*\n\n"
+                    f"{ch['emoji']} *{ch['title']}*\n"
+                    f"📊 Natija: {b}/{j} ({foiz}%)\n"
+                    f"_(Muvaffaqiyat uchun 70% kerak edi)_\n\n"
+                    f"💪 Qaytadan boshlashingiz mumkin!",
+                    parse_mode="Markdown")
+            except Exception as e:
+                log.debug("Xatolik (e'tiborga olinmadi): %s", e)
+
+    # 8. AVTOMATIK HISOBOTLAR — har bir foydalanuvchi o'zi belgilagan
+    # "kun yakuni" vaqtiga ko'ra (sozlamada o'zgartirilishi mumkin)
+    all_users = conn.execute("SELECT user_id, day_end_time FROM users WHERE registered=1").fetchall()
+
+    for u in all_users:
+        day_end = u['day_end_time'] or '22:00'
+
+        # Kechki AI hisobot — foydalanuvchining kun yakuni vaqtida
+        if current_time == day_end:
+            try:
+                report = generate_ai_report(u['user_id'])
+                bot.send_message(u['user_id'], report, parse_mode="Markdown")
+            except Exception as e:
+                log.debug("Xatolik (e'tiborga olinmadi): %s", e)
+
+            # Haftalik hisobot — yakshanba kuni, xuddi shu vaqtda
+            if now.weekday() == 6:
+                try: send_weekly_report(u['user_id'])
+                except Exception as e:
+                    log.debug("Xatolik (e'tiborga olinmadi): %s", e)
+
+            # Oylik hisobot — oyning oxirgi kuni, xuddi shu vaqtda
+            tomorrow = now + timedelta(days=1)
+            if tomorrow.month != now.month:
+                try: send_monthly_report(u['user_id'])
+                except Exception as e:
+                    log.debug("Xatolik (e'tiborga olinmadi): %s", e)
+
+        # 9. JARIMA TIZIMI — kun yakunidan 1.5 soat o'tib, bajarilmagan
+        # rejalar uchun ball jarimasi (har bir foydalanuvchi uchun shaxsiy vaqtda)
+        if current_time == hhmm_plus(day_end, 90):
+            uid = u['user_id']
+            row = conn.execute(
+                "SELECT COUNT(*) as cnt FROM daily_tasks "
+                "WHERE user_id=? AND sana=? AND status IS NULL AND notified=1",
+                (uid, today_str())).fetchone()
+            cnt = row['cnt'] or 0
+            if cnt > 0:
+                penalty = min(cnt * 5, 50)  # Max 50 ball jarima
+                add_ball_conn(conn, uid, -penalty)
+                conn.commit()
+                try:
+                    bot.send_message(uid,
+                        f"⚠️ *JARIMA TIZIMI*\n\n"
+                        f"❌ Bugun {cnt} ta reja bajarilmadi\n"
+                        f"💰 -{penalty} ball jarima qo'llanildi\n\n"
+                        f"_Ertaga barcha rejalarni bajaring!_",
+                        parse_mode="Markdown")
+                except Exception as e:
+                    log.debug("Xatolik (e'tiborga olinmadi): %s", e)
+
 
 # -----------------------------------------------------------------------
 # 🌐 WEB API (Mini App uchun)
@@ -4193,11 +4264,67 @@ def api_heatmap():
         days.append({"date": ds, "total": total, "done": done, "pct": pct})
     return jsonify({"days": days})
 
+# ---- Telegram webhook qo'llab-quvvatlash ----
+# WEBHOOK_URL sozlansa, Telegram webhook orqali ishlaydi (polling o'rniga).
+# Bu Render'da bot eslatmalari xavfsizligini oshiradi: webhook HTTP so'rovları
+# serverni doim "uyg'oq" saqlaydi va bepul tarifda ham scheduler to'xtamaydi.
+# ⚠️ Eslatma: webhook moda Mini App Flask'ni kerak, shuning uchun hammasi
+# bitta web server'da birlashtiriladi.
+
+# Webhook uchun ishlatiladigan secret token (WEBHOOK_SECRET berilmagan bo'lsa
+# avtomatik yaratiladi va Telegram'ga o'rnatiladi).
+_effective_webhook_secret = WEBHOOK_SECRET
+
+@api.route('/webhook', methods=['POST'])
+def webhook():
+    # Xavfsizlik: faqat Telegram yuborgandek ko'rinadigan xabarlarni qabul
+    # qilamiz. Telegram o'zi secret tokenni X-Telegram-Bot-Api-Secret-Token
+    # ichida yuboradi — agar mos kelmasa, so'rov rad etiladi.
+    if _effective_webhook_secret:
+        incoming = request.headers.get('X-Telegram-Bot-Api-Secret-Token', '')
+        if incoming != _effective_webhook_secret:
+            return jsonify({"error": "forbidden"}), 403
+    try:
+        update = request.get_json(force=True, silent=True) or {}
+        if update:
+            bot.process_new_updates([telebot.types.Update.de_json(update)])
+        return jsonify({"ok": True})
+    except Exception as e:
+        log.exception("Webhook xato: %s", e)
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+def setup_webhook():
+    """Telegram'da webhook'ni o'rnatadi. Secret token berilmagan bo'lsa,
+    avtomatik yaratib Telegram'ga uzatadi (xavfsizlik uchun)."""
+    global _effective_webhook_secret
+    if not WEBHOOK_URL:
+        return False
+    try:
+        secret = _effective_webhook_secret
+        if not secret:
+            secret = "ShaxNaz:" + hmac.new(
+                b"shaxnaz-webhook",
+                (API_TOKEN + WEBHOOK_URL).encode(), hashlib.sha256).hexdigest()[:24]
+            _effective_webhook_secret = secret
+        bot.set_webhook(
+            url=WEBHOOK_URL + '/webhook',
+            secret_token=secret,
+            drop_pending_updates=False,
+            allowed_updates=["message", "callback_query",
+                             "my_chat_member", "chat_member"])
+        log.info("🔗 Webhook o'rnatildi: %s/webhook", WEBHOOK_URL)
+        return True
+    except Exception as e:
+        log.error("Webhook o'rnatilmadi: %s — polling rejimiga o'tiladi", e)
+        return False
+
 def run_bot_polling():
-    """Bot polling — alohida daemon thread'da ishlaydi."""
-    # Webhook o'chiramiz — agar ilgari webhook orqali ishlagan bo'lsa,
-    # Telegram callback query'larni webhook'ga yuborishda davom etadi
-    # va polling hech narsa olmaydi. Bu eng ko'p uchraydigan sabab.
+    """Bot polling — alohida daemon thread'da ishlaydi (webhook bo'lmaganda)."""
+    # Webhook bo'lsa polling ishga tushmaydi (ikkalasi birga bo'lsa conflict).
+    if WEBHOOK_URL:
+        log.info("Webhook o'rnatilgan — polling ishlamaydi.")
+        while True:
+            time.sleep(3600)  # thread yashashini saqlaydi
     try:
         bot.delete_webhook(drop_pending_updates=False)
         log.info("🔗 Webhook o'chirildi (polling rejimiga o'tildi)")
@@ -4210,14 +4337,8 @@ def run_bot_polling():
             bot.infinity_polling(
                 timeout=30,
                 long_polling_timeout=20,
-                # callback_query ni ANIQ so'raymiz — belgilanmasa
-                # Telegram eski konfiguratsiyani ishlatishi mumkin
-                allowed_updates=[
-                    "message",
-                    "callback_query",
-                    "my_chat_member",
-                    "chat_member",
-                ],
+                allowed_updates=["message", "callback_query",
+                                 "my_chat_member", "chat_member"],
             )
         except Exception as e:
             log.warning("[POLLING] %s — 10 soniyadan keyin qayta uriniladi", e)
@@ -4234,14 +4355,16 @@ if __name__ == "__main__":
     t_sched.start()
     log.info("⏰ Taymer (scheduler) ishga tushdi")
 
-    # 2) Bot polling — fon thread'i
-    t_bot = threading.Thread(target=run_bot_polling, daemon=True, name="bot-polling")
+    # 2) Bot — webhook bo'lsa webhook, aks holda polling (fon thread'i)
+    using_webhook = setup_webhook()
+    t_bot = threading.Thread(target=run_bot_polling, daemon=True, name="bot-loop")
     t_bot.start()
-    log.info("🤖 Bot polling thread ishga tushdi")
+    if using_webhook:
+        log.info("🤖 Bot webhook rejimida ishlayapti (flask /webhook)")
+    else:
+        log.info("🤖 Bot polling thread ishga tushdi")
 
-    # 3) Flask (Mini App API) — ASOSIY JARAYON
-    # Render health check (/health) uchun Flask asosiy jarayonda ishlashi kerak.
-    # flask.run() bloklovchi — shuning uchun eng oxirida chaqiriladi.
+    # 3) Flask (Mini App + webhook + /health) — ASOSIY JARAYON
     port = int(os.environ.get("PORT", 8080))
     log.info("🌐 Flask API server port=%d da ishga tushmoqda...", port)
     api.run(host="0.0.0.0", port=port, threaded=True, use_reloader=False)
