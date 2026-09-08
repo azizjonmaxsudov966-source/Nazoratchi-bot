@@ -1,6 +1,7 @@
 import os
 import math
 import re
+import functools
 import logging
 import telebot
 from telebot import types
@@ -90,7 +91,6 @@ bot.exception_handler = type('EH', (), {'handle': staticmethod(lambda e: log.exc
 # yutilmagan exception'ni log'ga yozadi va foydalanuvchiga xabar yuboradi.
 # "Tugma bosildi lekin hech narsa bo'lmadi" holati bartaraf etiladi.
 def safe_callback(func):
-    import functools
     @functools.wraps(func)
     def wrapper(call):
         try:
